@@ -159,8 +159,22 @@ function handle_plugin_request(array $settings): never
 
     $expected = (string)($settings['bridge_secret'] ?? '');
     $headers = function_exists('getallheaders') ? getallheaders() : [];
-    $supplied = (string)($_SERVER['HTTP_X_MINTCORE_RELAY_KEY'] ?? $headers['X-MintCore-Relay-Key'] ?? '');
-    if (strlen($expected) < 64 || str_starts_with($expected, 'REPLACE_') || !hash_equals($expected, $supplied)) {
+    $supplied = (string)($_SERVER['HTTP_X_MINTCORE_RELAY_KEY'] ?? '');
+    if ($supplied === '') {
+        foreach ($headers as $name => $value) {
+            if (strcasecmp((string)$name, 'X-MintCore-Relay-Key') === 0) {
+                $supplied = (string)$value;
+                break;
+            }
+        }
+    }
+    if (strlen($expected) < 64 || str_starts_with($expected, 'REPLACE_')) {
+        error_log('MintCore relay: MINTCORE_BRIDGE_SECRET is missing or still a placeholder; configured length=' . strlen($expected) . '.');
+        http_response_code(401);
+        exit;
+    }
+    if (!hash_equals($expected, $supplied)) {
+        error_log('MintCore relay: relay key mismatch; configured length=' . strlen($expected) . ', received length=' . strlen($supplied) . '.');
         http_response_code(401);
         exit;
     }
