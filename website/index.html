@@ -11,6 +11,22 @@
         src: url("assets/MinecraftFiveBold.otf") format("opentype");
         font-display: swap;
       }
+      .disaster-card-wrap { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) 34px; gap: 6px; }
+      .disaster-card-wrap:not(.can-stop) { grid-template-columns: minmax(0, 1fr); }
+      .disaster-stop {
+        display: grid;
+        width: 34px;
+        min-height: 34px;
+        align-self: center;
+        place-items: center;
+        border: 1px solid rgba(152, 72, 76, .55);
+        border-radius: 10px;
+        background: rgba(57, 25, 28, .82);
+        color: #ef9b98;
+        cursor: pointer;
+      }
+      .disaster-stop:hover { border-color: #d76559; background: #482125; color: #ffd1c9; }
+      .disaster-stop svg { width: 13px; height: 13px; fill: currentColor; }
 
       @font-face {
         font-family: "Minecraft Five Bold";
@@ -251,23 +267,16 @@
       .restore-button { width: 100%; min-height: 42px; padding: 0 12px; border: 1px solid #705147; background: linear-gradient(180deg, #42251f, #291814); color: #ffd3c3; cursor: pointer; }
       .restore-button:hover:not(:disabled) { border-color: #b97861; filter: brightness(1.12); }
       .restore-caption { margin-top: 9px !important; color: #9e877e !important; }
-      .stop-disasters-button { width: 100%; min-height: 42px; margin-top: 12px; padding: 0 12px; border: 1px solid #8a3838; background: linear-gradient(180deg, #4a2020, #291313); color: #ffd1c9; cursor: pointer; }
-      .stop-disasters-button:hover:not(:disabled) { border-color: #d76559; filter: brightness(1.12); }
-      .stop-disasters-button:disabled { cursor: wait; opacity: .65; }
-      .stop-disasters-caption { margin-top: 8px !important; color: #a88078 !important; }
       .disaster-safety { margin-top: 18px !important; padding: 10px; border-left: 2px solid #6b5730; background: #19170f; color: #c4b789 !important; }
       .footer { display: flex; justify-content: space-between; gap: 15px; margin-top: 14px; color: #6f7f74; font-size: 9px; line-height: 1.8; }
       .footer strong { color: #a4b7a9; font-weight: normal; }
 
       body {
-        background-color: #080b09;
+        background-color: #000;
         background-image:
-          radial-gradient(circle at 19px 19px, rgba(117, 220, 140, .34) 1px, transparent 1.7px),
-          linear-gradient(rgba(117, 220, 140, .055) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(117, 220, 140, .055) 1px, transparent 1px),
-          radial-gradient(ellipse at 82% -10%, rgba(43, 105, 61, .22), transparent 38rem),
-          linear-gradient(135deg, #0b100d 0%, var(--bg) 60%);
-        background-size: 38px 38px, 38px 38px, 38px 38px, auto, auto;
+          linear-gradient(rgba(145, 151, 155, .09) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(145, 151, 155, .09) 1px, transparent 1px);
+        background-size: 38px 38px;
         background-attachment: fixed;
       }
 
@@ -289,7 +298,7 @@
       .tab { padding: 10px 15px; border-radius: 10px; }
       select, input { border-radius: 11px; background-color: rgba(8, 13, 10, .88); }
       select:focus, input:focus { box-shadow: 0 0 0 3px rgba(103, 180, 122, .12); }
-      .icon-button, .send-button, .primary-button, .restore-button, .stop-disasters-button { border-radius: 11px; }
+      .icon-button, .send-button, .primary-button, .restore-button { border-radius: 11px; }
       .console-layout { background: rgba(10, 15, 12, .48); }
       .terminal-column { border-right-color: rgba(105, 145, 113, .2); }
       .terminal-head, .gui-head { border-bottom-color: rgba(105, 145, 113, .16); }
@@ -483,8 +492,8 @@
           <div class="disaster-main">
             <div class="disaster-heading">
               <div>
-                <h2>Katastrofy MintCore</h2>
-                <p>Wybierz efekt, wpisz nick gracza i uruchom go w jego okolicy. Meteoryty są na pierwszym miejscu. Zmiany bloków można później cofnąć przyciskiem po prawej.</p>
+                      <h2>Katastrofy MintCore</h2>
+                      <p>Wybierz efekt, wpisz nick gracza i uruchom go w jego okolicy. Czerwony przycisk przy katastrofie zatrzymuje tylko ten efekt.</p>
               </div>
               <span class="disaster-warning">Świat SEKTORspawn jest chroniony</span>
             </div>
@@ -502,9 +511,7 @@
             </form>
             <div class="disaster-divider"></div>
             <h3>Aktywne katastrofy</h3>
-            <p>Tornado i deszcz meteorytów mogą działać do 10 minut. Możesz przerwać je wcześniej.</p>
-            <button class="stop-disasters-button" id="stop-disasters" type="button">ZATRZYMAJ TORNADO I METEORYTY</button>
-            <p class="stop-disasters-caption">Zatrzymanie nie cofa zniszczeń. Użyj poniżej przycisku odtwarzania terenu.</p>
+            <p>Katastrofy oznaczone czerwonym przyciskiem trwają do 10 minut. Zatrzymanie jednej nie wpływa na pozostałe.</p>
             <div class="disaster-divider"></div>
             <h3>Odtwarzanie terenu</h3>
             <p>Przywraca wyłącznie bloki zmienione przez katastrofy uruchomione z panelu. Ręczne zmiany wykonane później zostaną pominięte.</p>
@@ -577,6 +584,11 @@
         { id: "levitation_anomaly", name: "Lewitacyjna anomalia", icon: "↑", description: "Silna lewitacja obejmuje większy obszar." },
         { id: "false_death", name: "Fałszywa śmierć", icon: "◌", description: "Kontrolowana eksplozja i krótki efekt Withera." }
       ];
+      const timedDisasterIds = new Set([
+        "meteor_shower", "zombie_apocalypse", "sky_wrath", "earthquake", "acid_rain",
+        "spider_invasion", "rage_plague", "explosive_rain", "tornado", "anvil_rain",
+        "chorus_chaos", "fiery_breath", "lightning_chain"
+      ]);
       const disasterIconPaths = {
         meteor_shower: "M4 20 15 9l4 4L8 24M12 12l1-5m5 5 4-1M8 17l-5 1M16 5l1-2",
         tornado: "M3 5h18M5 9h14M7 13h10M9 17h6M10 21h4",
@@ -1036,6 +1048,8 @@
 
       function renderDisasterCards() {
         const cards = disasters.map((disaster) => {
+          const cardWrap = document.createElement("div");
+          cardWrap.className = `disaster-card-wrap${timedDisasterIds.has(disaster.id) ? " can-stop" : ""}`;
           const button = document.createElement("button");
           button.type = "button";
           button.className = `disaster-card${disaster.featured ? " featured" : ""}`;
@@ -1066,9 +1080,50 @@
             featured.textContent = "POLECANE";
             button.append(featured);
           }
-          return button;
+          cardWrap.append(button);
+          if (timedDisasterIds.has(disaster.id)) {
+            const stopButton = document.createElement("button");
+            stopButton.type = "button";
+            stopButton.className = "disaster-stop";
+            stopButton.dataset.stopDisasterId = disaster.id;
+            stopButton.setAttribute("aria-label", `Zatrzymaj ${disaster.name}`);
+            stopButton.title = `Zatrzymaj tylko: ${disaster.name}`;
+            const stopIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            stopIcon.setAttribute("viewBox", "0 0 16 16");
+            stopIcon.setAttribute("aria-hidden", "true");
+            const stopShape = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            stopShape.setAttribute("x", "3");
+            stopShape.setAttribute("y", "3");
+            stopShape.setAttribute("width", "10");
+            stopShape.setAttribute("height", "10");
+            stopShape.setAttribute("rx", "1.5");
+            stopIcon.append(stopShape);
+            stopButton.append(stopIcon);
+            cardWrap.append(stopButton);
+          }
+          return cardWrap;
         });
         $("#disaster-grid").replaceChildren(...cards);
+      }
+
+      async function stopDisaster(disasterId) {
+        const disaster = disasters.find((entry) => entry.id === disasterId);
+        if (!disaster || !timedDisasterIds.has(disasterId)) return;
+        if (!window.confirm(`Zatrzymać tylko katastrofę „${disaster.name}”?`)) return;
+        const button = $(`[data-stop-disaster-id="${disasterId}"]`);
+        button.disabled = true;
+        try {
+          const result = await api("/api/command", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+            body: new URLSearchParams({ command: `mintcore-disaster stop ${disasterId}`, player: "" })
+          });
+          showNotice(result.message || `Wysłano zatrzymanie: ${disaster.name}.`, result.ok === false);
+        } catch (error) {
+          showNotice(error.message, true);
+        } finally {
+          button.disabled = false;
+        }
       }
 
       function selectDisaster(disaster) {
@@ -1311,6 +1366,11 @@
       });
 
       $("#disaster-grid").addEventListener("click", (event) => {
+        const stopButton = event.target.closest("[data-stop-disaster-id]");
+        if (stopButton) {
+          stopDisaster(stopButton.dataset.stopDisasterId);
+          return;
+        }
         const card = event.target.closest(".disaster-card");
         if (!card) return;
         const disaster = disasters.find((entry) => entry.id === card.dataset.disasterId);
@@ -1353,24 +1413,6 @@
             body: new URLSearchParams({ command: "mintcore-disaster restore", player: "" })
           });
           showNotice(result.message || "Polecenie odtwarzania terenu wysłane.", result.ok === false);
-        } catch (error) {
-          showNotice(error.message, true);
-        } finally {
-          button.disabled = false;
-        }
-      });
-
-      $("#stop-disasters").addEventListener("click", async (event) => {
-        if (!window.confirm("Zatrzymać aktywne tornado i deszcz meteorytów?")) return;
-        const button = event.currentTarget;
-        button.disabled = true;
-        try {
-          const result = await api("/api/command", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-            body: new URLSearchParams({ command: "mintcore-disaster stop", player: "" })
-          });
-          showNotice(result.message || "Polecenie zatrzymania wysłane.", result.ok === false);
         } catch (error) {
           showNotice(error.message, true);
         } finally {
