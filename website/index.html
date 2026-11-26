@@ -12,6 +12,18 @@
         font-display: swap;
       }
 
+      @font-face {
+        font-family: "Minecraft Five Bold";
+        src: url("assets/MinecraftFiveBold.otf") format("opentype");
+        font-display: swap;
+      }
+
+      @font-face {
+        font-family: "Minecraft";
+        src: url("assets/Minecraft.ttf") format("truetype");
+        font-display: swap;
+      }
+
       :root {
         color-scheme: dark;
         --bg: #090d0b;
@@ -143,10 +155,12 @@
       .gui-placeholder { color: #617067; font-size: 10px; line-height: 2; text-align: center; }
       .gui-placeholder-mark { display: grid; width: 54px; height: 54px; margin: 0 auto 15px; place-items: center; border: 1px solid #34463a; color: #819788; font-size: 22px; }
       .gui-meta { width: min(100%, 352px); margin-top: 10px; color: #85958a; font-size: 9px; line-height: 1.8; overflow-wrap: anywhere; text-align: center; }
-      .mc-tooltip { position: fixed; z-index: 20; max-width: min(260px, calc(100vw - 20px)); padding: 6px 8px; border: 2px solid #2a1b3d; background: rgba(16, 8, 24, .98); box-shadow: 0 2px 0 #100817, 0 8px 20px rgba(0,0,0,.5); color: #fff; font-size: 10px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; pointer-events: none; }
+      .mc-tooltip { position: fixed; z-index: 20; max-width: min(260px, calc(100vw - 20px)); padding: 6px 8px; border: 2px solid #2a1b3d; background: rgba(16, 8, 24, .98); box-shadow: 0 2px 0 #100817, 0 8px 20px rgba(0,0,0,.5); color: #fff; font-family: "Minecraft", "Minecraft Five", monospace; font-size: 10px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; pointer-events: none; }
       .mc-tooltip[hidden] { display: none; }
       .mc-tooltip-name { color: #fff; }
       .mc-tooltip-lore { color: #aaa; }
+      .mc-tooltip .mc-font-smallcaps { font-family: "Minecraft Five", "Minecraft", monospace; }
+      .mc-tooltip .mc-font-bold { font-family: "Minecraft Five Bold", "Minecraft Five", monospace; }
 
       .checks-panel { display: none; min-height: 570px; }
       .checks-panel.active { display: block; }
@@ -327,40 +341,69 @@
         });
       }
 
-      function appendLegacyText(container, text) {
+      const minecraftColors = {
+        "0":"#000000", "1":"#0000aa", "2":"#00aa00", "3":"#00aaaa",
+        "4":"#aa0000", "5":"#aa00aa", "6":"#ffaa00", "7":"#aaaaaa",
+        "8":"#555555", "9":"#5555ff", "a":"#55ff55", "b":"#55ffff",
+        "c":"#ff5555", "d":"#ff55ff", "e":"#ffff55", "f":"#ffffff",
+        "black":"#000000", "dark_blue":"#0000aa", "dark_green":"#00aa00",
+        "dark_aqua":"#00aaaa", "dark_red":"#aa0000", "dark_purple":"#aa00aa",
+        "gold":"#ffaa00", "gray":"#aaaaaa", "grey":"#aaaaaa",
+        "dark_gray":"#555555", "dark_grey":"#555555", "blue":"#5555ff",
+        "green":"#55ff55", "aqua":"#55ffff", "red":"#ff5555",
+        "light_purple":"#ff55ff", "yellow":"#ffff55", "white":"#ffffff"
+      };
+
+      function resolveMinecraftColor(color) {
+        if (typeof color !== "string") return "";
+        if (/^#[\da-f]{6}$/i.test(color)) return color;
+        return minecraftColors[color.toLowerCase()] || "";
+      }
+
+      function appendLegacyText(container, text, inherited = {}) {
         text = normalizeFontText(text);
         const pattern = /(?:§|&)(#[0-9a-f]{6}|[0-9a-fk-or])/ig;
-        let currentColor = "";
-        let bold = false;
-        let italic = false;
+        let currentColor = resolveMinecraftColor(inherited.color);
+        let bold = Boolean(inherited.bold);
+        let italic = Boolean(inherited.italic);
+        let underlined = Boolean(inherited.underlined);
+        let strikethrough = Boolean(inherited.strikethrough);
+        const isGuiTooltip = Boolean(inherited.tooltip || container.closest(".mc-tooltip"));
         let cursor = 0;
         let match;
-        while ((match = pattern.exec(text)) !== null) {
-          if (match.index > cursor) {
-            const span = document.createElement("span");
-            span.textContent = text.slice(cursor, match.index);
-            if (currentColor) span.style.color = currentColor;
-            if (bold) span.style.fontWeight = "bold";
-            if (italic) span.style.fontStyle = "italic";
-            container.append(span);
+        const appendStyledText = (value) => {
+          if (!value) return;
+          const span = document.createElement("span");
+          span.textContent = value;
+          if (currentColor) span.style.color = currentColor;
+          if (bold) {
+            span.style.fontWeight = "bold";
+            if (isGuiTooltip) span.classList.add("mc-font-bold");
           }
+          if (italic) span.style.fontStyle = "italic";
+          const decorations = [];
+          if (underlined) decorations.push("underline");
+          if (strikethrough) decorations.push("line-through");
+          if (decorations.length) span.style.textDecorationLine = decorations.join(" ");
+          if (inherited.smallCaps && isGuiTooltip) span.classList.add("mc-font-smallcaps");
+          container.append(span);
+        };
+        while ((match = pattern.exec(text)) !== null) {
+          appendStyledText(text.slice(cursor, match.index));
           const code = match[1].toLowerCase();
-          const colors = { "0":"#000000", "1":"#0000aa", "2":"#00aa00", "3":"#00aaaa", "4":"#aa0000", "5":"#aa00aa", "6":"#ffaa00", "7":"#aaaaaa", "8":"#555555", "9":"#5555ff", "a":"#55ff55", "b":"#55ffff", "c":"#ff5555", "d":"#ff55ff", "e":"#ffff55", "f":"#ffffff" };
           if (code[0] === "#") currentColor = code;
-          else if (colors[code]) currentColor = colors[code];
+          else if (minecraftColors[code]) {
+            currentColor = minecraftColors[code];
+            if (code === "b" && isGuiTooltip) bold = true;
+          }
           else if (code === "l") bold = true;
           else if (code === "o") italic = true;
-          else if (code === "r") { currentColor = ""; bold = false; italic = false; }
+          else if (code === "n") underlined = true;
+          else if (code === "m") strikethrough = true;
+          else if (code === "r") { currentColor = ""; bold = false; italic = false; underlined = false; strikethrough = false; }
           cursor = pattern.lastIndex;
         }
-        if (cursor < text.length) {
-          const span = document.createElement("span");
-          span.textContent = text.slice(cursor);
-          if (currentColor) span.style.color = currentColor;
-          if (bold) span.style.fontWeight = "bold";
-          if (italic) span.style.fontStyle = "italic";
-          container.append(span);
-        }
+        appendStyledText(text.slice(cursor));
       }
 
       function appendComponent(container, component, inherited = {}) {
@@ -374,15 +417,22 @@
           return;
         }
         const span = document.createElement("span");
-        const color = component.color || inherited.color;
-        if (color && /^#[\da-f]{6}$/i.test(color)) span.style.color = color;
-        if (component.bold || inherited.bold) span.style.fontWeight = "bold";
-        if (component.italic || inherited.italic) span.style.fontStyle = "italic";
-        if (component.underlined || inherited.underlined) span.style.textDecoration = "underline";
-        if (component.text != null) appendLegacyText(span, component.text);
-        if (component.translate != null && component.text == null) span.textContent = normalizeFontText(component.translate);
-        if (component.with) component.with.forEach((part) => appendComponent(span, part, { color, bold: component.bold, italic: component.italic }));
-        if (component.extra) component.extra.forEach((part) => appendComponent(span, part, { color, bold: component.bold, italic: component.italic }));
+        const isGuiTooltip = Boolean(inherited.tooltip || container.closest(".mc-tooltip"));
+        const style = {
+          color: component.color !== undefined ? component.color : inherited.color,
+          bold: component.bold !== undefined ? component.bold : inherited.bold,
+          italic: component.italic !== undefined ? component.italic : inherited.italic,
+          underlined: component.underlined !== undefined ? component.underlined : inherited.underlined,
+          strikethrough: component.strikethrough !== undefined ? component.strikethrough : inherited.strikethrough,
+          tooltip: isGuiTooltip,
+          smallCaps: component.font !== undefined
+            ? /small[-_ ]?caps|minecraft:alt/i.test(component.font)
+            : inherited.smallCaps
+        };
+        if (component.text != null) appendLegacyText(span, component.text, style);
+        if (component.translate != null && component.text == null) appendLegacyText(span, component.translate, style);
+        if (component.with) component.with.forEach((part) => appendComponent(span, part, style));
+        if (component.extra) component.extra.forEach((part) => appendComponent(span, part, style));
         if (span.childNodes.length || span.textContent) container.append(span);
       }
 
@@ -480,23 +530,23 @@
         itemTooltip.replaceChildren();
         const name = document.createElement("div");
         name.className = "mc-tooltip-name";
+        itemTooltip.append(name);
         if (item.nameComponent) {
           try { appendComponent(name, JSON.parse(item.nameComponent)); }
           catch { name.textContent = normalizeFontText(item.name || prettyMaterial(item.material)); }
         } else {
           name.textContent = normalizeFontText(item.name || prettyMaterial(item.material));
         }
-        itemTooltip.append(name);
         for (const line of item.lore || []) {
           const lore = document.createElement("div");
           lore.className = "mc-tooltip-lore";
+          itemTooltip.append(lore);
           if (line && line.component) {
             try { appendComponent(lore, JSON.parse(line.component)); }
             catch { appendLegacyText(lore, line.text || ""); }
           } else {
             appendLegacyText(lore, line && line.text ? line.text : "");
           }
-          itemTooltip.append(lore);
         }
         itemTooltip.hidden = false;
         positionItemTooltip(event, slot);
