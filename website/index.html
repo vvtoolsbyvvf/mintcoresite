@@ -223,6 +223,10 @@
       .restore-button { width: 100%; min-height: 42px; padding: 0 12px; border: 1px solid #705147; background: linear-gradient(180deg, #42251f, #291814); color: #ffd3c3; cursor: pointer; }
       .restore-button:hover:not(:disabled) { border-color: #b97861; filter: brightness(1.12); }
       .restore-caption { margin-top: 9px !important; color: #9e877e !important; }
+      .stop-disasters-button { width: 100%; min-height: 42px; margin-top: 12px; padding: 0 12px; border: 1px solid #8a3838; background: linear-gradient(180deg, #4a2020, #291313); color: #ffd1c9; cursor: pointer; }
+      .stop-disasters-button:hover:not(:disabled) { border-color: #d76559; filter: brightness(1.12); }
+      .stop-disasters-button:disabled { cursor: wait; opacity: .65; }
+      .stop-disasters-caption { margin-top: 8px !important; color: #a88078 !important; }
       .disaster-safety { margin-top: 18px !important; padding: 10px; border-left: 2px solid #6b5730; background: #19170f; color: #c4b789 !important; }
       .footer { display: flex; justify-content: space-between; gap: 15px; margin-top: 14px; color: #6f7f74; font-size: 9px; line-height: 1.8; }
       .footer strong { color: #a4b7a9; font-weight: normal; }
@@ -384,6 +388,11 @@
               <button class="primary-button disaster-launch" id="disaster-launch" type="submit">URUCHOM KATASTROFĘ</button>
             </form>
             <div class="disaster-divider"></div>
+            <h3>Aktywne katastrofy</h3>
+            <p>Tornado i deszcz meteorytów mogą działać do 10 minut. Możesz przerwać je wcześniej.</p>
+            <button class="stop-disasters-button" id="stop-disasters" type="button">ZATRZYMAJ TORNADO I METEORYTY</button>
+            <p class="stop-disasters-caption">Zatrzymanie nie cofa zniszczeń. Użyj poniżej przycisku odtwarzania terenu.</p>
+            <div class="disaster-divider"></div>
             <h3>Odtwarzanie terenu</h3>
             <p>Przywraca wyłącznie bloki zmienione przez katastrofy uruchomione z panelu. Ręczne zmiany wykonane później zostaną pominięte.</p>
             <button class="restore-button" id="restore-disaster-terrain" type="button">ODTWÓRZ TEREN</button>
@@ -416,6 +425,7 @@
       let selectedDisaster = null;
       const disasters = [
         { id: "meteor_shower", name: "Deszcz meteorytów", icon: "☄", featured: true, description: "Wielki blok magmy 3×3 leci na fireballu, niszczy teren i zapisuje bloki do odtworzenia." },
+        { id: "tornado", name: "Wielkie tornado", icon: "⟳", featured: true, description: "Gęsty wir nakładających się bloków. Po krótkim błądzeniu rusza w pościg za wybranym graczem." },
         { id: "zombie_apocalypse", name: "Apokalipsa zombie", icon: "☠", description: "Fale zombie pojawiają się w okolicy celu." },
         { id: "flood", name: "Potop", icon: "≈", description: "Wypełnia pobliskie wolne przestrzenie wodą." },
         { id: "sky_wrath", name: "Uderzenie niebios", icon: "⚡", description: "Seria błyskawic i kontrolowanych eksplozji." },
@@ -429,7 +439,6 @@
         { id: "golden_flash", name: "Złoty blask", icon: "✧", description: "Lecząca aura regeneracji i absorpcji." },
         { id: "wither_bomb", name: "Witherowa bomba", icon: "⊗", description: "Fala energii nakładająca efekt Withera." },
         { id: "explosive_rain", name: "Eksplozywny deszcz", icon: "☁", description: "TNT spada z nieba; wybuchy nie niszczą bloków." },
-        { id: "tornado", name: "Tornado", icon: "⟳", description: "Wichura wyrzuca pobliskie istoty w powietrze." },
         { id: "toxic_fog", name: "Trująca mgła", icon: "☣", description: "Zatruwa graczy w zasięgu działania." },
         { id: "anvil_rain", name: "Deszcz kowadeł", icon: "♜", description: "Kowadła spadają z nieba i zadają obrażenia." },
         { id: "toxic_gas", name: "Toksyczny gaz", icon: "◈", description: "Oślepia i dezorientuje pobliskich graczy." },
@@ -1145,6 +1154,24 @@
             body: new URLSearchParams({ command: "mintcore-disaster restore", player: "" })
           });
           showNotice(result.message || "Polecenie odtwarzania terenu wysłane.", result.ok === false);
+        } catch (error) {
+          showNotice(error.message, true);
+        } finally {
+          button.disabled = false;
+        }
+      });
+
+      $("#stop-disasters").addEventListener("click", async (event) => {
+        if (!window.confirm("Zatrzymać aktywne tornado i deszcz meteorytów?")) return;
+        const button = event.currentTarget;
+        button.disabled = true;
+        try {
+          const result = await api("/api/command", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+            body: new URLSearchParams({ command: "mintcore-disaster stop", player: "" })
+          });
+          showNotice(result.message || "Polecenie zatrzymania wysłane.", result.ok === false);
         } catch (error) {
           showNotice(error.message, true);
         } finally {
