@@ -32,17 +32,21 @@ if ($action === 'plugin' || ($action === '' && $_SERVER['REQUEST_METHOD'] === 'P
 }
 
 if ($action === 'login') {
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path' => '/',
-        'secure' => $isHttps,
-        'httponly' => true,
-        'samesite' => 'Strict',
-    ]);
-    session_start();
+    start_dashboard_session($isHttps);
     handle_login($settings);
 }
 
+if ($action === 'second-factor') {
+    start_dashboard_session($isHttps);
+    handle_second_factor($settings);
+}
+
+if ($action === 'activate') {
+    start_dashboard_session($isHttps);
+    handle_activate();
+}
+
+start_dashboard_session($isHttps);
 if (!is_dashboard_authorized($settings)) {
     send_json(401, ['error' => 'Zaloguj sie ponownie.']);
 }
@@ -90,26 +94,102 @@ function handle_login(array $settings): never
 
     $_SESSION['login_attempts'] = 0;
     $_SESSION['login_window'] = $now;
+    if (!session_regenerate_id(true)) {
+        send_json(500, ['error' => 'Nie udało się zabezpieczyć sesji logowania.']);
+    }
+    $_SESSION['primary_authenticated'] = true;
+    $_SESSION['second_factor_verified'] = false;
+    $_SESSION['second_factor_passed'] = false;
+    $_SESSION['primary_password_hash'] = hash('sha256', $expected);
+    $_SESSION['authenticated_at'] = $now;
     send_json(200, ['ok' => true]);
+}
+
+function handle_second_factor(array $settings): never
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        send_json(405, ['error' => 'Use POST to verify the additional password.']);
+    }
+    if (empty($_SESSION['primary_authenticated'])) {
+        send_json(401, ['error' => 'Zaloguj sie ponownie.']);
+    }
+
+    $now = time();
+    $windowStart = (int)($_SESSION['factor_window'] ?? 0);
+    if ($now - $windowStart > 600) {
+        $_SESSION['factor_window'] = $now;
+        $_SESSION['factor_attempts'] = 0;
+    }
+    if ((int)($_SESSION['factor_attempts'] ?? 0) >= 8) {
+        send_json(429, ['error' => 'Za duzo prob. Sprobuj ponownie za 10 minut.']);
+    }
+    $_SESSION['factor_attempts'] = (int)($_SESSION['factor_attempts'] ?? 0) + 1;
+
+    $expected = (string)($settings['second_factor_password'] ?? '');
+    if (strlen($expected) < 24) {
+        send_json(503, ['error' => 'Dodatkowe zabezpieczenie nie jest skonfigurowane.']);
+    }
+    $supplied = (string)($_POST['password'] ?? '');
+    if (!hash_equals($expected, $supplied)) {
+        send_json(401, ['error' => 'Nieprawidlowe haslo.']);
+    }
+
+    $_SESSION['factor_attempts'] = 0;
+    $_SESSION['second_factor_verified'] = true;
+    $_SESSION['second_factor_passed'] = false;
+    $_SESSION['second_factor_password_hash'] = hash('sha256', $expected);
+    send_json(200, ['ok' => true]);
+}
+
+function handle_activate(): never
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        send_json(405, ['error' => 'Use POST to activate the dashboard.']);
+    }
+    if (empty($_SESSION['primary_authenticated']) || empty($_SESSION['second_factor_verified'])) {
+        send_json(401, ['error' => 'Weryfikacja dostepu nie powiodla sie.']);
+    }
+
+    $_SESSION['second_factor_passed'] = true;
+    send_json(200, ['ok' => true]);
+}
+
+function start_dashboard_session(bool $secure): void
+{
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return;
+    }
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'secure' => $secure,
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ]);
+    if (!session_start()) {
+        send_json(500, ['error' => 'Nie udało się uruchomić sesji logowania.']);
+    }
 }
 
 function is_dashboard_authorized(array $settings): bool
 {
-    $expected = (string)($settings['dashboard_password'] ?? '');
-    $supplied = (string)($_SERVER['HTTP_X_MINTCORE_DASHBOARD_PASSWORD'] ?? '');
-    $headers = function_exists('getallheaders') ? getallheaders() : [];
-    if ($supplied === '') {
-        foreach ($headers as $name => $value) {
-            if (strcasecmp((string)$name, 'X-MintCore-Dashboard-Password') === 0) {
-                $supplied = (string)$value;
-                break;
-            }
-        }
+    $authenticatedAt = (int)($_SESSION['authenticated_at'] ?? 0);
+    $dashboardPassword = (string)($settings['dashboard_password'] ?? '');
+    $secondFactorPassword = (string)($settings['second_factor_password'] ?? '');
+    if (empty($_SESSION['primary_authenticated'])
+        || empty($_SESSION['second_factor_passed'])
+        || $authenticatedAt === 0
+        || time() - $authenticatedAt > 43200
+        || strlen($dashboardPassword) < 16
+        || str_starts_with($dashboardPassword, 'CHANGE_THIS_')
+        || strlen($secondFactorPassword) < 24
+        || !hash_equals(hash('sha256', $dashboardPassword), (string)($_SESSION['primary_password_hash'] ?? ''))
+        || !hash_equals(hash('sha256', $secondFactorPassword), (string)($_SESSION['second_factor_password_hash'] ?? ''))) {
+        return false;
     }
-
-    return strlen($expected) >= 16
-        && !str_starts_with($expected, 'CHANGE_THIS_')
-        && hash_equals($expected, $supplied);
+    return true;
 }
 
 function handle_state(): never
