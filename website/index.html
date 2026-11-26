@@ -341,6 +341,12 @@
         });
       }
 
+      function parseComponent(value) {
+        if (typeof value === "string") return JSON.parse(value);
+        if (value && typeof value === "object") return value;
+        throw new TypeError("Nieprawidłowy komponent tekstu.");
+      }
+
       const minecraftColors = {
         "0":"#000000", "1":"#0000aa", "2":"#00aa00", "3":"#00aaaa",
         "4":"#aa0000", "5":"#aa00aa", "6":"#ffaa00", "7":"#aaaaaa",
@@ -532,7 +538,7 @@
         name.className = "mc-tooltip-name";
         itemTooltip.append(name);
         if (item.nameComponent) {
-          try { appendComponent(name, JSON.parse(item.nameComponent)); }
+          try { appendComponent(name, parseComponent(item.nameComponent)); }
           catch { name.textContent = normalizeFontText(item.name || prettyMaterial(item.material)); }
         } else {
           name.textContent = normalizeFontText(item.name || prettyMaterial(item.material));
@@ -542,7 +548,7 @@
           lore.className = "mc-tooltip-lore";
           itemTooltip.append(lore);
           if (line && line.component) {
-            try { appendComponent(lore, JSON.parse(line.component)); }
+            try { appendComponent(lore, parseComponent(line.component)); }
             catch { appendLegacyText(lore, line.text || ""); }
           } else {
             appendLegacyText(lore, line && line.text ? line.text : "");
@@ -635,7 +641,7 @@
               name.textContent = `${event.player}: `;
               message.append(name);
             }
-            try { appendComponent(message, JSON.parse(event.component)); }
+            try { appendComponent(message, parseComponent(event.component)); }
             catch { appendLegacyText(message, event.message); }
           } else {
             appendLegacyText(message, event.message);
