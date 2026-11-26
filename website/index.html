@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#090d0b">
+    <title>MintCore — panel serwera</title>
+    <style>
+      @font-face {
+        font-family: "Minecraft Five";
+        src: url("assets/MinecraftFiveBold.otf") format("opentype");
+        font-display: swap;
+      }
+
+      :root {
+        color-scheme: dark;
+        --bg: #090d0b;
+        --surface: #101713;
+        --surface-raised: #151e18;
+        --line: #26352b;
+        --muted: #829287;
+        --text: #e7f2e9;
+        --green: #88f0a3;
+        --green-dark: #143522;
+        --red: #ff7777;
+        --mono: "Minecraft Five", "Courier New", monospace;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        min-width: 340px;
+        min-height: 100vh;
+        margin: 0;
+        background:
+          radial-gradient(ellipse at 82% -10%, rgba(43, 105, 61, .22), transparent 38rem),
+          linear-gradient(135deg, #0b100d 0%, var(--bg) 60%);
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+
+      button, input, select { font: inherit; }
+      button { color: inherit; }
+
+      .shell { width: min(1500px, 100%); margin: 0 auto; padding: 22px clamp(14px, 3vw, 42px) 32px; }
+      .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
+      .brand { display: flex; align-items: center; gap: 13px; }
+      .brand-mark {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border: 1px solid #477654;
+        background: linear-gradient(145deg, #23452d, #122318);
+        color: var(--green);
+        font-size: 17px;
+        box-shadow: inset 0 0 0 3px rgba(8, 14, 10, .45), 0 8px 25px rgba(46, 135, 67, .13);
+      }
+      .brand-name { margin: 0; font-size: 18px; letter-spacing: 1px; }
+      .brand-caption { margin: 5px 0 0; color: var(--muted); font-size: 9px; letter-spacing: .8px; }
+      .top-status { display: flex; align-items: center; gap: 15px; color: var(--muted); }
+      .online-pill, .connection-pill { display: inline-flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid var(--line); background: rgba(15, 23, 18, .8); }
+      .online-dot, .connection-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px rgba(136, 240, 163, .65); }
+      .connection-dot.offline { background: var(--red); box-shadow: 0 0 12px rgba(255, 119, 119, .55); }
+
+      .hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+      .eyebrow { margin: 0 0 8px; color: var(--green); font-size: 9px; letter-spacing: 2px; }
+      h1 { margin: 0; font-size: clamp(20px, 3vw, 30px); line-height: 1.4; }
+      .hero-copy { max-width: 620px; margin: 8px 0 0; color: var(--muted); line-height: 1.8; }
+      .workspace { overflow: hidden; border: 1px solid var(--line); background: rgba(14, 20, 16, .95); box-shadow: 0 24px 80px rgba(0, 0, 0, .28); }
+      .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 15px; border-bottom: 1px solid var(--line); background: #111813; }
+      .tabs { display: flex; align-items: center; gap: 6px; }
+      .tab { padding: 10px 14px; border: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; }
+      .tab:hover { color: var(--text); }
+      .tab.active { border-color: #31503a; background: #17241a; color: var(--green); }
+      .toolbar-actions { display: flex; align-items: center; gap: 10px; }
+      .select-wrap { display: flex; align-items: center; gap: 9px; color: var(--muted); }
+      select, input {
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 0;
+        background: #0b100d;
+        color: var(--text);
+        outline: none;
+      }
+      select { max-width: 190px; padding: 0 30px 0 10px; }
+      select:focus, input:focus { border-color: #67b47a; }
+      .icon-button { min-width: 38px; min-height: 38px; border: 1px solid var(--line); background: #101711; color: var(--muted); cursor: pointer; }
+      .icon-button:hover { border-color: #4a7553; color: var(--green); }
+
+      .console-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 390px); min-height: 570px; }
+      .terminal-column { display: flex; min-width: 0; min-height: 570px; flex-direction: column; border-right: 1px solid var(--line); }
+      .terminal-head, .gui-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 45px; padding: 0 15px; border-bottom: 1px solid #202b23; color: var(--muted); }
+      .terminal-head strong, .gui-head strong { color: #cbd9ce; font-weight: normal; }
+      .terminal-lights { display: flex; gap: 5px; }
+      .terminal-lights i { width: 7px; height: 7px; background: #304337; }
+      .terminal-lights i:first-child { background: #b96559; }
+      .terminal-lights i:nth-child(2) { background: #caa55d; }
+      .terminal-lights i:nth-child(3) { background: #70ae78; }
+      .log-list { display: flex; flex: 1; min-height: 440px; flex-direction: column; gap: 5px; overflow: auto; padding: 14px 15px; background-image: linear-gradient(rgba(255,255,255,.012) 1px, transparent 1px); background-size: 100% 25px; }
+      .log-entry { display: grid; grid-template-columns: 77px 66px minmax(0, 1fr); align-items: baseline; gap: 8px; min-height: 21px; line-height: 1.65; overflow-wrap: anywhere; }
+      .log-time { color: #68786d; font-size: 9px; white-space: nowrap; }
+      .log-level { color: #74857a; font-size: 9px; }
+      .log-level.WARNING { color: #f0c46d; }
+      .log-level.SEVERE { color: #ff7777; }
+      .log-level.CHAT { color: #76c9a0; }
+      .log-level.COMMAND { color: #a68afb; }
+      .log-message { color: #d1ddd3; white-space: pre-wrap; }
+      .chat-name { color: var(--green); }
+      .empty-log { margin: auto; color: #718177; line-height: 2; text-align: center; }
+      .command-form { display: flex; gap: 9px; padding: 13px 15px; border-top: 1px solid var(--line); background: #101712; }
+      .prompt { align-self: center; color: var(--green); font-size: 14px; }
+      .command-input { flex: 1; min-width: 0; padding: 0 11px; }
+      .send-button, .primary-button { min-height: 38px; padding: 0 15px; border: 1px solid #438554; background: linear-gradient(180deg, #244c30, #1a3824); color: #d8ffe1; cursor: pointer; }
+      .send-button:hover, .primary-button:hover { filter: brightness(1.16); }
+      .send-button:disabled { opacity: .5; cursor: wait; }
+      .run-context { padding: 0 15px 11px; background: #101712; color: #75867a; font-size: 9px; }
+      .run-context span { color: #b5c8b9; }
+
+      .gui-column { min-width: 0; background: #0d130f; }
+      .gui-body { display: flex; min-height: 515px; flex-direction: column; align-items: center; justify-content: center; padding: 24px 18px; }
+      .gui-caption { max-width: 270px; margin: 14px auto 0; color: #75867a; font-size: 9px; line-height: 1.8; text-align: center; }
+      .inventory-frame { width: min(100%, 336px); padding: 7px; border: 2px solid #b8b8b8; background: #676767; box-shadow: inset 0 0 0 1px #2c2c2c, 0 10px 25px rgba(0,0,0,.25); }
+      .inventory-title { min-height: 29px; margin: -1px -1px 5px; padding: 8px 7px; background: #242424; color: #eee; font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .slot-grid { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 2px; }
+      .slot {
+        position: relative;
+        display: grid;
+        aspect-ratio: 1;
+        min-width: 0;
+        place-items: center;
+        border: 2px solid;
+        border-color: #e1e1e1 #393939 #393939 #e1e1e1;
+        background: #888;
+        color: #f3f3f3;
+        font-size: 8px;
+        text-align: center;
+        text-shadow: 1px 1px #222;
+        overflow-wrap: anywhere;
+      }
+      .slot.empty { background: #858585; }
+      .slot-item { max-width: 100%; padding: 2px; }
+      .slot-count { position: absolute; right: 2px; bottom: 1px; color: white; font-size: 8px; text-shadow: 1px 1px #222; }
+      .gui-placeholder { color: #617067; font-size: 10px; line-height: 2; text-align: center; }
+      .gui-placeholder-mark { display: grid; width: 54px; height: 54px; margin: 0 auto 15px; place-items: center; border: 1px solid #34463a; color: #819788; font-size: 22px; }
+      .gui-meta { width: min(100%, 336px); margin-top: 13px; color: #85958a; font-size: 9px; line-height: 1.8; overflow-wrap: anywhere; }
+
+      .checks-panel { display: none; min-height: 570px; }
+      .checks-panel.active { display: block; }
+      .checks-head { display: flex; align-items: center; justify-content: space-between; padding: 22px; border-bottom: 1px solid var(--line); }
+      .checks-title { margin: 0; font-size: 16px; }
+      .checks-subtitle { margin: 8px 0 0; color: var(--muted); font-size: 9px; }
+      .checks-count { padding: 8px 11px; border: 1px solid #344638; background: #17231a; color: var(--green); }
+      .check-list { display: flex; flex-direction: column; gap: 7px; padding: 16px; }
+      .check-entry { display: grid; grid-template-columns: 130px 82px minmax(0, 1fr); gap: 12px; padding: 13px; border: 1px solid #202c23; background: #111813; line-height: 1.7; overflow-wrap: anywhere; }
+      .check-time { color: #748378; font-size: 9px; }
+      .check-level { color: var(--green); }
+      .check-message { color: #c7d4ca; }
+      .checks-empty { padding: 66px 20px; color: var(--muted); line-height: 2; text-align: center; }
+      .footer { display: flex; justify-content: space-between; gap: 15px; margin-top: 14px; color: #6f7f74; font-size: 9px; line-height: 1.8; }
+      .footer strong { color: #a4b7a9; font-weight: normal; }
+
+      .login-overlay { position: fixed; z-index: 5; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(5, 8, 6, .88); backdrop-filter: blur(7px); }
+      .login-card { width: min(420px, 100%); padding: 27px; border: 1px solid #35513c; background: #101713; box-shadow: 0 24px 90px rgba(0,0,0,.5); }
+      .login-card h2 { margin: 0 0 10px; font-size: 18px; }
+      .login-card p { color: var(--muted); font-size: 10px; line-height: 1.9; }
+      .login-card label { display: block; margin: 20px 0 7px; color: #b4c5b8; }
+      .login-input { width: 100%; padding: 0 11px; }
+      .login-card .primary-button { width: 100%; margin-top: 12px; }
+      .login-card a { color: var(--green); }
+      .login-error { min-height: 16px; color: var(--red) !important; }
+      .notice { position: fixed; z-index: 4; right: 18px; bottom: 18px; max-width: min(400px, calc(100vw - 36px)); padding: 12px 15px; border: 1px solid #3b5f43; background: #15241a; color: #d9ffe0; line-height: 1.8; box-shadow: 0 12px 35px rgba(0,0,0,.35); }
+      .notice.error { border-color: #6a3b3b; background: #2a1717; color: #ffd0d0; }
+
+      @media (max-width: 900px) {
+        .console-layout { grid-template-columns: minmax(0, 1fr) 310px; }
+        .toolbar { align-items: flex-start; flex-direction: column; }
+        .toolbar-actions { width: 100%; justify-content: space-between; }
+      }
+      @media (max-width: 700px) {
+        .topbar { align-items: flex-start; }
+        .top-status { flex-direction: column; align-items: flex-end; gap: 6px; }
+        .hero { align-items: flex-start; flex-direction: column; }
+        .console-layout { grid-template-columns: minmax(0, 1fr); }
+        .terminal-column { border-right: 0; border-bottom: 1px solid var(--line); }
+        .gui-body { min-height: 350px; }
+        .log-entry { grid-template-columns: 61px 55px minmax(0, 1fr); gap: 5px; }
+        .check-entry { grid-template-columns: 1fr; gap: 2px; }
+        .footer { flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-overlay" id="login-overlay">
+      <form class="login-card" id="login-form">
+        <div class="brand-mark" style="margin-bottom:18px">M</div>
+        <h2>Panel MintCore</h2>
+        <p id="login-instructions">Wpisz token z <strong>plugins/MintCore/config.yml</strong>, aby połączyć się z konsolą serwera.</p>
+        <label for="token-input" id="login-label">Token dostępu</label>
+        <input class="login-input" id="token-input" type="password" autocomplete="current-password" required>
+        <p class="login-error" id="login-error" role="status" aria-live="polite"></p>
+        <p id="local-file-help" hidden>Ta strona jest otwarta jako plik. Otworz panel z serwera MintCore: <a href="http://127.0.0.1:8765/">http://127.0.0.1:8765/</a></p>
+        <button class="primary-button" type="submit">POŁĄCZ Z SERWEREM</button>
+      </form>
+    </div>
+
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">M</div>
+          <div>
+            <p class="brand-name">MintCore</p>
+            <p class="brand-caption">PANEL ZARZĄDZANIA SERWEREM</p>
+          </div>
+        </div>
+        <div class="top-status">
+          <div class="online-pill"><span class="online-dot"></span><span><b id="online-count">0</b> graczy online</span></div>
+          <div class="connection-pill"><span class="connection-dot offline" id="connection-dot"></span><span id="connection-label">Rozłączono</span></div>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div>
+          <p class="eyebrow">MINTCORE / LIVE CONTROL</p>
+          <h1>Centrum serwera</h1>
+          <p class="hero-copy">Logi na żywo, komendy i szybki podgląd menu Minecraft. Wybierz gracza, aby wykonywać polecenia w jego kontekście i zobaczyć otwarte GUI.</p>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <div class="toolbar">
+          <nav class="tabs" aria-label="Zakładki panelu">
+            <button class="tab active" id="tab-console" type="button">KONSOLA</button>
+            <button class="tab" id="tab-checks" type="button">CZEKI <span id="checks-tab-count"></span></button>
+          </nav>
+          <div class="toolbar-actions">
+            <label class="select-wrap" for="player-select">Wykonaj jako
+              <select id="player-select"><option value="">Konsola serwera</option></select>
+            </label>
+            <button class="icon-button" id="clear-button" type="button" title="Wyczyść widok logów">⌫</button>
+          </div>
+        </div>
+
+        <section class="console-layout" id="console-panel">
+          <div class="terminal-column">
+            <div class="terminal-head">
+              <span><span class="terminal-lights"><i></i><i></i><i></i></span> &nbsp; <strong>LOGI SERWERA</strong></span>
+              <span id="log-count">0 wpisów</span>
+            </div>
+            <div class="log-list" id="log-list" aria-live="polite">
+              <div class="empty-log">Oczekiwanie na połączenie z serwerem...</div>
+            </div>
+            <form class="command-form" id="command-form">
+              <span class="prompt">›</span>
+              <input class="command-input" id="command-input" type="text" placeholder="Wpisz komendę serwera..." autocomplete="off" maxlength="1024">
+              <button class="send-button" id="send-button" type="submit">WYŚLIJ</button>
+            </form>
+            <div class="run-context">Komendy gracza zachowują jego uprawnienia. <span id="context-label">Wybrano: konsola</span></div>
+          </div>
+          <aside class="gui-column">
+            <div class="gui-head"><strong>PODGLĄD GUI</strong><span id="gui-player-label">OCZEKUJE</span></div>
+            <div class="gui-body" id="gui-body">
+              <div class="gui-placeholder"><div class="gui-placeholder-mark">▦</div>Wybierz gracza i otwórz menu<br>komendą, aby zobaczyć jego układ.</div>
+            </div>
+          </aside>
+        </section>
+
+        <section class="checks-panel" id="checks-panel">
+          <div class="checks-head">
+            <div><h2 class="checks-title">Dziennik czeków</h2><p class="checks-subtitle">Wpisy systemu czeków MintCore aktualizowane na żywo.</p></div>
+            <span class="checks-count" id="checks-count">0 ZDARZEŃ</span>
+          </div>
+          <div class="check-list" id="check-list"><div class="checks-empty">Oczekiwanie na zdarzenia czeków...</div></div>
+        </section>
+      </section>
+
+      <footer class="footer">
+        <span><strong>MintCore</strong> · Konsola i dziennik zdarzeń</span>
+        <span id="footer-security">Panel domyślnie dostępny tylko lokalnie · Chroń swój token</span>
+      </footer>
+    </main>
+    <div class="notice" id="notice" hidden></div>
+
+    <script src="/relay-config.js"></script>
+    <script>
+      const $ = (selector) => document.querySelector(selector);
+      const RELAY_MODE = window.MINTCORE_RELAY === true;
+      const loginOverlay = $("#login-overlay");
+      const tokenInput = $("#token-input");
+      const loginError = $("#login-error");
+      const logList = $("#log-list");
+      const checkList = $("#check-list");
+      const playerSelect = $("#player-select");
+      const localFileHelp = $("#local-file-help");
+      let token = RELAY_MODE ? "" : (sessionStorage.getItem("mintcore-token") || "");
+      let relayAuthenticated = false;
+      let polling = false;
+      let clearedBefore = 0;
+
+      function normalizeFontText(value) {
+        const replacements = {
+          "ą":"a", "ć":"c", "ę":"e", "ł":"l", "ń":"n", "ś":"s", "ź":"z", "ż":"z",
+          "Ą":"A", "Ć":"C", "Ę":"E", "Ł":"L", "Ń":"N", "Ś":"S", "Ź":"Z", "Ż":"Z"
+        };
+        return String(value ?? "").replace(/[ąćęłńśźżĄĆĘŁŃŚŹŻ]/g, (character) => replacements[character]);
+      }
+
+      function normalizeVisibleText() {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let node;
+        while ((node = walker.nextNode())) {
+          if (!node.parentElement.closest("script, style")) {
+            node.nodeValue = normalizeFontText(node.nodeValue);
+          }
+        }
+        document.querySelectorAll("[placeholder], [title], [aria-label]").forEach((element) => {
+          for (const attribute of ["placeholder", "title", "aria-label"]) {
+            if (element.hasAttribute(attribute)) {
+              element.setAttribute(attribute, normalizeFontText(element.getAttribute(attribute)));
+            }
+          }
+        });
+      }
+
+      function appendLegacyText(container, text) {
+        text = normalizeFontText(text);
+        const pattern = /(?:§|&)(#[0-9a-f]{6}|[0-9a-fk-or])/ig;
+        let currentColor = "";
+        let bold = false;
+        let italic = false;
+        let cursor = 0;
+        let match;
+        while ((match = pattern.exec(text)) !== null) {
+          if (match.index > cursor) {
+            const span = document.createElement("span");
+            span.textContent = text.slice(cursor, match.index);
+            if (currentColor) span.style.color = currentColor;
+            if (bold) span.style.fontWeight = "bold";
+            if (italic) span.style.fontStyle = "italic";
+            container.append(span);
+          }
+          const code = match[1].toLowerCase();
+          const colors = { "0":"#000000", "1":"#0000aa", "2":"#00aa00", "3":"#00aaaa", "4":"#aa0000", "5":"#aa00aa", "6":"#ffaa00", "7":"#aaaaaa", "8":"#555555", "9":"#5555ff", "a":"#55ff55", "b":"#55ffff", "c":"#ff5555", "d":"#ff55ff", "e":"#ffff55", "f":"#ffffff" };
+          if (code[0] === "#") currentColor = code;
+          else if (colors[code]) currentColor = colors[code];
+          else if (code === "l") bold = true;
+          else if (code === "o") italic = true;
+          else if (code === "r") { currentColor = ""; bold = false; italic = false; }
+          cursor = pattern.lastIndex;
+        }
+        if (cursor < text.length) {
+          const span = document.createElement("span");
+          span.textContent = text.slice(cursor);
+          if (currentColor) span.style.color = currentColor;
+          if (bold) span.style.fontWeight = "bold";
+          if (italic) span.style.fontStyle = "italic";
+          container.append(span);
+        }
+      }
+
+      function appendComponent(container, component, inherited = {}) {
+        if (component == null) return;
+        if (typeof component === "string") {
+          appendLegacyText(container, component);
+          return;
+        }
+        if (Array.isArray(component)) {
+          component.forEach((part) => appendComponent(container, part, inherited));
+          return;
+        }
+        const span = document.createElement("span");
+        const color = component.color || inherited.color;
+        if (color && /^#[\da-f]{6}$/i.test(color)) span.style.color = color;
+        if (component.bold || inherited.bold) span.style.fontWeight = "bold";
+        if (component.italic || inherited.italic) span.style.fontStyle = "italic";
+        if (component.underlined || inherited.underlined) span.style.textDecoration = "underline";
+        if (component.text != null) appendLegacyText(span, component.text);
+        if (component.translate != null && component.text == null) span.textContent = normalizeFontText(component.translate);
+        if (component.with) component.with.forEach((part) => appendComponent(span, part, { color, bold: component.bold, italic: component.italic }));
+        if (component.extra) component.extra.forEach((part) => appendComponent(span, part, { color, bold: component.bold, italic: component.italic }));
+        if (span.childNodes.length || span.textContent) container.append(span);
+      }
+
+      function showNotice(message, isError = false) {
+        const notice = $("#notice");
+        notice.textContent = normalizeFontText(message);
+        notice.classList.toggle("error", isError);
+        notice.hidden = false;
+        window.setTimeout(() => { notice.hidden = true; }, 3500);
+      }
+
+      async function parseJsonResponse(response) {
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.toLowerCase().includes("application/json")) {
+          const error = new Error("Otrzymano odpowiedź inną niż JSON. Sprawdź adres relayu i konfigurację hostingu.");
+          error.status = response.status;
+          throw error;
+        }
+        const payload = await response.json();
+        if (!response.ok) {
+          const error = new Error(payload.error || `Błąd serwera (${response.status})`);
+          error.status = response.status;
+          throw error;
+        }
+        return payload;
+      }
+
+      async function api(path, options = {}) {
+        let url = path;
+        const headers = { ...(options.headers || {}) };
+        if (RELAY_MODE) {
+          const parsed = new URL(path, window.location.href);
+          const action = parsed.pathname.endsWith("/api/state") ? "state" : "command";
+          const query = new URLSearchParams(parsed.search);
+          if (query.has("player")) {
+            query.set("watch", query.get("player"));
+            query.delete("player");
+          }
+          query.set("action", action);
+          url = `bridge.php?${query.toString()}`;
+        } else {
+          headers.Authorization = `Bearer ${token}`;
+        }
+        const response = await fetch(url, {
+          ...options,
+          credentials: "same-origin",
+          headers
+        });
+        return parseJsonResponse(response);
+      }
+
+      function renderEvents(events) {
+        const visible = events.filter((event) => Date.parse(event.time) >= clearedBefore);
+        const atBottom = logList.scrollHeight - logList.scrollTop - logList.clientHeight < 60;
+        logList.replaceChildren();
+        if (!visible.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty-log";
+          empty.textContent = "Brak wpisów. Nowe logi, czat i komendy pojawią się tutaj.";
+          logList.append(empty);
+        }
+        for (const event of visible) {
+          const row = document.createElement("div");
+          row.className = "log-entry";
+          const time = document.createElement("span");
+          time.className = "log-time";
+          time.textContent = new Date(event.time).toLocaleTimeString("pl-PL", { hour12: false });
+          const level = document.createElement("span");
+          level.className = `log-level ${event.level}`;
+          level.textContent = event.level;
+          const message = document.createElement("span");
+          message.className = "log-message";
+          if (event.component) {
+            if (event.player) {
+              const name = document.createElement("span");
+              name.className = "chat-name";
+              name.textContent = `${event.player}: `;
+              message.append(name);
+            }
+            try { appendComponent(message, JSON.parse(event.component)); }
+            catch { appendLegacyText(message, event.message); }
+          } else {
+            appendLegacyText(message, event.message);
+          }
+          row.append(time, level, message);
+          logList.append(row);
+        }
+        $("#log-count").textContent = `${visible.length} wpisów`;
+        if (atBottom) logList.scrollTop = logList.scrollHeight;
+      }
+
+      function renderChecks(events) {
+        const checks = events.filter((event) => event.message.includes("[MintCore | Czek]"));
+        $("#checks-count").textContent = `${checks.length} ZDARZEŃ`;
+        $("#checks-tab-count").textContent = checks.length ? `(${checks.length})` : "";
+        checkList.replaceChildren();
+        if (!checks.length) {
+          const empty = document.createElement("div");
+          empty.className = "checks-empty";
+          empty.textContent = "Brak wpisów czeków. Zdarzenia pojawią się tutaj na żywo.";
+          checkList.append(empty);
+          return;
+        }
+        for (const event of [...checks].reverse()) {
+          const row = document.createElement("div");
+          row.className = "check-entry";
+          const time = document.createElement("span");
+          time.className = "check-time";
+          time.textContent = new Date(event.time).toLocaleString("pl-PL", { hour12: false });
+          const level = document.createElement("span");
+          level.className = "check-level";
+          level.textContent = event.level;
+          const message = document.createElement("span");
+          message.className = "check-message";
+          appendLegacyText(message, event.message);
+          row.append(time, level, message);
+          checkList.append(row);
+        }
+      }
+
+      function renderPlayers(players) {
+        const selected = playerSelect.value;
+        const options = [new Option("Konsola serwera", "")];
+        for (const player of players) {
+          options.push(new Option(`${normalizeFontText(player.name)} · ${normalizeFontText(player.world)}`, player.id));
+        }
+        playerSelect.replaceChildren(...options);
+        if (players.some((player) => player.id === selected)) playerSelect.value = selected;
+        $("#context-label").textContent = playerSelect.value
+          ? `Wybrano: ${playerSelect.options[playerSelect.selectedIndex].text.split(" · ")[0]}`
+          : "Wybrano: konsola";
+      }
+
+      function renderGui(gui) {
+        const body = $("#gui-body");
+        const selected = playerSelect.value;
+        const selectedName = selected && playerSelect.selectedIndex >= 0
+          ? playerSelect.options[playerSelect.selectedIndex].text.split(" · ")[0]
+          : "";
+        $("#gui-player-label").textContent = selectedName ? selectedName.toUpperCase() : "OCZEKUJE";
+        body.replaceChildren();
+        if (!gui) {
+          const empty = document.createElement("div");
+          empty.className = "gui-placeholder";
+          const mark = document.createElement("div");
+          mark.className = "gui-placeholder-mark";
+          mark.textContent = "▦";
+          const text = document.createElement("div");
+          text.textContent = selectedName
+            ? "Gracz nie ma otwartego menu. Wpisz komendę otwierającą GUI."
+            : "Wybierz gracza i otwórz menu komendą, aby zobaczyć jego układ.";
+          empty.append(mark, text);
+          body.append(empty);
+          return;
+        }
+
+        const frame = document.createElement("div");
+        frame.className = "inventory-frame";
+        const title = document.createElement("div");
+        title.className = "inventory-title";
+        title.textContent = normalizeFontText(gui.title || "MENU");
+        const grid = document.createElement("div");
+        grid.className = "slot-grid";
+        grid.style.gridTemplateRows = `repeat(${Math.ceil(gui.size / 9)}, 1fr)`;
+        for (const item of gui.slots) {
+          const slot = document.createElement("div");
+          slot.className = `slot${item ? "" : " empty"}`;
+          if (item) {
+            const label = document.createElement("span");
+            label.className = "slot-item";
+            label.textContent = item.material === "PLAYER_HEAD" ? "◉" : item.material.slice(0, 3);
+            label.title = normalizeFontText(`${item.name} (${item.material})${item.lore.map((line) => `\n${line.text}`).join("")}`);
+            if (item.nameComponent) {
+              try { appendComponent(label, JSON.parse(item.nameComponent)); }
+              catch { label.textContent = item.name; }
+            }
+            const count = document.createElement("span");
+            count.className = "slot-count";
+            count.textContent = item.amount > 1 ? item.amount : "";
+            slot.append(label, count);
+          }
+          grid.append(slot);
+        }
+        frame.append(title, grid);
+        body.append(frame);
+        const meta = document.createElement("div");
+        meta.className = "gui-meta";
+        meta.textContent = `${gui.size / 9} RZĘDÓW · ${gui.size} SLOTÓW · PODGLĄD GRACZA ${gui.player}`;
+        body.append(meta);
+      }
+
+      async function refresh() {
+        if (polling || (!token && !RELAY_MODE) || (RELAY_MODE && !relayAuthenticated)) return;
+        polling = true;
+        try {
+          const query = playerSelect.value ? `?player=${encodeURIComponent(playerSelect.value)}` : "";
+          const state = await api(`/api/state${query}`);
+          $("#connection-dot").classList.remove("offline");
+          $("#connection-label").textContent = "Połączono";
+          $("#online-count").textContent = state.online;
+          renderPlayers(state.players);
+          renderEvents(state.events);
+          renderChecks(state.events);
+          renderGui(state.gui);
+          normalizeVisibleText();
+          if (RELAY_MODE) loginOverlay.hidden = true;
+        } catch (error) {
+          $("#connection-dot").classList.add("offline");
+          $("#connection-label").textContent = "Brak połączenia";
+          if ((!RELAY_MODE && error.message.includes("token")) || (RELAY_MODE && error.status === 401)) {
+            sessionStorage.removeItem("mintcore-token");
+            token = "";
+            relayAuthenticated = false;
+            loginOverlay.hidden = false;
+            loginError.textContent = normalizeFontText(error.message);
+          }
+        } finally {
+          polling = false;
+        }
+      }
+
+      $("#login-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const submitButton = $("#login-form button[type=submit]");
+        const originalButtonText = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = "LOGOWANIE...";
+        loginError.textContent = "";
+        try {
+          if (RELAY_MODE) {
+            const response = await fetch(new URL("/bridge.php?action=login", window.location.origin), {
+              method: "POST",
+              credentials: "same-origin",
+              headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+              body: new URLSearchParams({ password: tokenInput.value })
+            });
+            await parseJsonResponse(response);
+            await api("/api/state");
+            relayAuthenticated = true;
+          } else {
+            token = tokenInput.value.trim();
+            await api("/api/state");
+            sessionStorage.setItem("mintcore-token", token);
+          }
+          loginError.textContent = "";
+          loginOverlay.hidden = true;
+          await refresh();
+        } catch (error) {
+          if (!RELAY_MODE) token = "";
+          relayAuthenticated = false;
+          loginOverlay.hidden = false;
+          loginError.textContent = normalizeFontText(error.message);
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = originalButtonText;
+        }
+      });
+
+      $("#command-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const input = $("#command-input");
+        const command = input.value.trim();
+        if (!command) return;
+        $("#send-button").disabled = true;
+        try {
+          const result = await api("/api/command", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+            body: new URLSearchParams({ command, player: playerSelect.value })
+          });
+          showNotice(result.message, !result.ok);
+          input.value = "";
+          await refresh();
+        } catch (error) {
+          showNotice(error.message, true);
+        } finally {
+          $("#send-button").disabled = false;
+          input.focus();
+        }
+      });
+
+      $("#tab-console").addEventListener("click", () => {
+        $("#tab-console").classList.add("active");
+        $("#tab-checks").classList.remove("active");
+        $("#console-panel").style.display = "grid";
+        $("#checks-panel").classList.remove("active");
+      });
+      $("#tab-checks").addEventListener("click", () => {
+        $("#tab-checks").classList.add("active");
+        $("#tab-console").classList.remove("active");
+        $("#console-panel").style.display = "none";
+        $("#checks-panel").classList.add("active");
+      });
+      $("#clear-button").addEventListener("click", () => {
+        clearedBefore = Date.now();
+        logList.replaceChildren();
+        const empty = document.createElement("div");
+        empty.className = "empty-log";
+        empty.textContent = "Widok wyczyszczony. Nowe wpisy pojawią się tutaj.";
+        logList.append(empty);
+        $("#log-count").textContent = "0 wpisów";
+      });
+      playerSelect.addEventListener("change", refresh);
+
+      normalizeVisibleText();
+      if (RELAY_MODE) {
+        $("#login-label").textContent = "Hasło panelu";
+        $("#login-instructions").textContent = "Wpisz hasło ustawione w pliku bridge-config.php na stronie.";
+        $("#footer-security").textContent = "Panel zabezpieczony HTTPS · Chroń swoje hasło.";
+        tokenInput.autocomplete = "current-password";
+        normalizeVisibleText();
+      }
+      if (window.location.protocol === "file:") {
+        tokenInput.disabled = true;
+        $("#login-form button[type=submit]").disabled = true;
+        localFileHelp.hidden = false;
+      }
+      if (token) {
+        if (window.location.protocol !== "file:") {
+          tokenInput.value = token;
+          $("#login-form").requestSubmit();
+        }
+      } else if (RELAY_MODE && window.location.protocol !== "file:") {
+        api("/api/state").then(() => {
+          relayAuthenticated = true;
+          loginOverlay.hidden = true;
+          refresh();
+        }).catch((error) => {
+          if (error.status !== 401) {
+            loginError.textContent = normalizeFontText(error.message);
+          }
+        });
+      }
+      window.setInterval(refresh, 1200);
+    </script>
+  </body>
+</html>
