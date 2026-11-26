@@ -106,6 +106,7 @@
       .tab:hover { color: var(--text); }
       .tab.active { border-color: transparent; background: transparent; color: var(--green); }
       .toolbar-actions { display: flex; align-items: center; gap: 10px; }
+      .workspace[data-active-tab="disaster"] #toolbar-actions { display: none; }
       .select-wrap { display: flex; align-items: center; gap: 9px; color: var(--muted); }
       select, input {
         min-height: 38px;
@@ -193,6 +194,36 @@
       .check-level { color: var(--green); }
       .check-message { color: #c7d4ca; }
       .checks-empty { padding: 66px 20px; color: var(--muted); line-height: 2; text-align: center; }
+      .disaster-panel { display: none; min-height: 570px; }
+      .disaster-panel.active { display: grid; grid-template-columns: minmax(0, 1fr) 320px; }
+      .disaster-main { min-width: 0; padding: 20px; }
+      .disaster-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+      .disaster-heading h2 { margin: 0; font-size: 15px; }
+      .disaster-heading p { max-width: 650px; margin: 8px 0 0; color: var(--muted); font-size: 9px; line-height: 1.8; }
+      .disaster-warning { align-self: flex-start; padding: 8px 10px; border: 1px solid #634e2d; background: #261f13; color: #e8c879; font-size: 9px; white-space: nowrap; }
+      .disaster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 9px; }
+      .disaster-card { position: relative; display: grid; grid-template-columns: 35px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 70px; padding: 10px; border: 1px solid #27372c; background: linear-gradient(145deg, #121a15, #0d130f); color: var(--text); cursor: pointer; text-align: left; }
+      .disaster-card:hover, .disaster-card.selected { border-color: #568762; background: #17241a; }
+      .disaster-card.featured { border-color: #6b5730; background: linear-gradient(145deg, #262013, #131810); }
+      .disaster-card.featured:hover, .disaster-card.featured.selected { border-color: #d1a950; }
+      .disaster-icon { display: grid; width: 35px; height: 35px; place-items: center; border: 1px solid #314537; background: #18251b; color: var(--green); font-size: 16px; }
+      .disaster-card.featured .disaster-icon { border-color: #6b5730; background: #332815; color: #f0c46d; }
+      .disaster-card strong { display: block; font-size: 9px; font-weight: normal; line-height: 1.7; }
+      .disaster-card small { display: block; margin-top: 3px; color: var(--muted); font-size: 8px; line-height: 1.6; }
+      .disaster-featured-label { position: absolute; top: 4px; right: 5px; color: #f0c46d; font-size: 7px; }
+      .disaster-side { padding: 20px; border-left: 1px solid var(--line); background: rgba(12, 18, 14, .7); }
+      .disaster-side h3 { margin: 0 0 9px; font-size: 12px; }
+      .disaster-side p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.8; }
+      .disaster-form { display: grid; gap: 9px; margin-top: 18px; }
+      .disaster-form[hidden] { display: none; }
+      .disaster-form label { color: #b6c6b9; font-size: 9px; }
+      .disaster-form input { width: 100%; margin-top: 7px; padding: 0 10px; }
+      .disaster-launch { width: 100%; }
+      .disaster-divider { height: 1px; margin: 21px 0; background: var(--line); }
+      .restore-button { width: 100%; min-height: 42px; padding: 0 12px; border: 1px solid #705147; background: linear-gradient(180deg, #42251f, #291814); color: #ffd3c3; cursor: pointer; }
+      .restore-button:hover:not(:disabled) { border-color: #b97861; filter: brightness(1.12); }
+      .restore-caption { margin-top: 9px !important; color: #9e877e !important; }
+      .disaster-safety { margin-top: 18px !important; padding: 10px; border-left: 2px solid #6b5730; background: #19170f; color: #c4b789 !important; }
       .footer { display: flex; justify-content: space-between; gap: 15px; margin-top: 14px; color: #6f7f74; font-size: 9px; line-height: 1.8; }
       .footer strong { color: #a4b7a9; font-weight: normal; }
 
@@ -216,6 +247,8 @@
 
       @media (max-width: 900px) {
         .console-layout { grid-template-columns: minmax(0, 1fr) 310px; }
+        .disaster-panel.active { grid-template-columns: minmax(0, 1fr) 280px; }
+        .disaster-main, .disaster-side { padding: 16px; }
         .toolbar { align-items: flex-start; flex-direction: column; }
         .toolbar-actions { width: 100%; justify-content: space-between; }
       }
@@ -224,6 +257,11 @@
         .top-status { flex-direction: column; align-items: flex-end; gap: 6px; }
         .hero { align-items: flex-start; flex-direction: column; }
         .console-layout { grid-template-columns: minmax(0, 1fr); }
+        .disaster-panel.active { grid-template-columns: minmax(0, 1fr); }
+        .disaster-side { border-top: 1px solid var(--line); border-left: 0; }
+        .disaster-heading { flex-direction: column; }
+        .disaster-warning { white-space: normal; }
+        .disaster-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); }
         .terminal-column { border-right: 0; border-bottom: 1px solid var(--line); }
         .gui-body { min-height: 350px; }
         .log-entry { grid-template-columns: 61px 55px minmax(0, 1fr); gap: 5px; }
@@ -282,8 +320,9 @@
           <nav class="tabs" aria-label="Zakładki panelu">
             <button class="tab active" id="tab-console" type="button">KONSOLA</button>
             <button class="tab" id="tab-checks" type="button">CZEKI <span id="checks-tab-count"></span></button>
+            <button class="tab" id="tab-disaster" type="button">KATASTROFA</button>
           </nav>
-          <div class="toolbar-actions">
+          <div class="toolbar-actions" id="toolbar-actions">
             <label class="select-wrap" for="player-select">Wykonaj jako
               <select id="player-select"><option value="">Konsola serwera</option></select>
             </label>
@@ -322,6 +361,36 @@
           </div>
           <div class="check-list" id="check-list"><div class="checks-empty">Oczekiwanie na zdarzenia czeków...</div></div>
         </section>
+
+        <section class="disaster-panel" id="disaster-panel">
+          <div class="disaster-main">
+            <div class="disaster-heading">
+              <div>
+                <h2>Katastrofy MintCore</h2>
+                <p>Wybierz efekt, wpisz nick gracza i uruchom go w jego okolicy. Meteoryty są na pierwszym miejscu. Zmiany bloków można później cofnąć przyciskiem po prawej.</p>
+              </div>
+              <span class="disaster-warning">Świat SEKTORspawn jest chroniony</span>
+            </div>
+            <div class="disaster-grid" id="disaster-grid"></div>
+          </div>
+          <aside class="disaster-side">
+            <h3 id="disaster-selected-title">Wybierz katastrofę</h3>
+            <p id="disaster-selected-description">Kliknij kartę, aby wybrać efekt i otworzyć formularz celu.</p>
+            <form class="disaster-form" id="disaster-form" hidden>
+              <label for="disaster-player">Nick gracza online
+                <input id="disaster-player" name="player" type="text" maxlength="16" minlength="3" pattern="[A-Za-z0-9_]{3,16}" autocomplete="off" list="disaster-player-suggestions" placeholder="np. Steve" required>
+                <datalist id="disaster-player-suggestions"></datalist>
+              </label>
+              <button class="primary-button disaster-launch" id="disaster-launch" type="submit">URUCHOM KATASTROFĘ</button>
+            </form>
+            <div class="disaster-divider"></div>
+            <h3>Odtwarzanie terenu</h3>
+            <p>Przywraca wyłącznie bloki zmienione przez katastrofy uruchomione z panelu. Ręczne zmiany wykonane później zostaną pominięte.</p>
+            <button class="restore-button" id="restore-disaster-terrain" type="button">ODTWÓRZ TEREN</button>
+            <p class="restore-caption">Odtwarzanie jest zapisywane i może być dokończone po ponownym uruchomieniu serwera.</p>
+            <p class="disaster-safety">Efekty działają w pobliżu wskazanego gracza. Katastrofy nie uruchomią się w świecie SEKTORspawn.</p>
+          </aside>
+        </section>
       </section>
 
       <footer class="footer">
@@ -343,6 +412,49 @@
       const playerSelect = $("#player-select");
       const localFileHelp = $("#local-file-help");
       const loginInstructions = $("#login-instructions");
+      const disasterPlayerInput = $("#disaster-player");
+      let selectedDisaster = null;
+      const disasters = [
+        { id: "meteor_shower", name: "Deszcz meteorytów", icon: "☄", featured: true, description: "Seria meteorytów niszczących teren; bloki można później odtworzyć." },
+        { id: "zombie_apocalypse", name: "Apokalipsa zombie", icon: "☠", description: "Fale zombie pojawiają się w okolicy celu." },
+        { id: "flood", name: "Potop", icon: "≈", description: "Wypełnia pobliskie wolne przestrzenie wodą." },
+        { id: "sky_wrath", name: "Uderzenie niebios", icon: "⚡", description: "Seria błyskawic i kontrolowanych eksplozji." },
+        { id: "earthquake", name: "Trzęsienie ziemi", icon: "▦", description: "Wstrząsy, osłabienie i niewielkie zmiany gruntu." },
+        { id: "acid_rain", name: "Kwaśny deszcz", icon: "☣", description: "Zadaje obrażenia i usuwa część roślinności." },
+        { id: "spider_invasion", name: "Inwazja pająków", icon: "⌘", description: "Pojawiają się pająki jaskiniowe i pajęczyny." },
+        { id: "drought_fire", name: "Susza i pożar", icon: "☀", description: "Osusza wodę, wysusza trawę i tworzy bloki magmy." },
+        { id: "rage_plague", name: "Plaga szału", icon: "☾", description: "Mroczna klątwa i fale wrogich mobów." },
+        { id: "hell_meteor", name: "Piekielny meteor", icon: "◆", description: "Pojedynczy potężny meteor niszczy teren i zapisuje bloki do odtworzenia." },
+        { id: "blizzard", name: "Blizzard", icon: "❄", description: "Zamraża graczy i spowalnia ich w śnieżnej zawiei." },
+        { id: "golden_flash", name: "Złoty blask", icon: "✧", description: "Lecząca aura regeneracji i absorpcji." },
+        { id: "wither_bomb", name: "Witherowa bomba", icon: "⊗", description: "Fala energii nakładająca efekt Withera." },
+        { id: "explosive_rain", name: "Eksplozywny deszcz", icon: "☁", description: "TNT spada z nieba; wybuchy nie niszczą bloków." },
+        { id: "tornado", name: "Tornado", icon: "⟳", description: "Wichura wyrzuca pobliskie istoty w powietrze." },
+        { id: "toxic_fog", name: "Trująca mgła", icon: "☣", description: "Zatruwa graczy w zasięgu działania." },
+        { id: "anvil_rain", name: "Deszcz kowadeł", icon: "♜", description: "Kowadła spadają z nieba i zadają obrażenia." },
+        { id: "toxic_gas", name: "Toksyczny gaz", icon: "◈", description: "Oślepia i dezorientuje pobliskich graczy." },
+        { id: "teleport_chaos", name: "Teleportacyjny chaos", icon: "↔", description: "Losowo przenosi graczy w bezpieczne pobliskie miejsca." },
+        { id: "magnetic_storm", name: "Magnetyczny sztorm", icon: "✥", description: "Silne pole przyciąga pobliskie istoty do centrum." },
+        { id: "time_stop", name: "Zatrzymanie czasu", icon: "◷", description: "Mocno spowalnia istoty w okolicy." },
+        { id: "ocean_wave", name: "Oceaniczna fala", icon: "≈", description: "Zalewa wolne przestrzenie wodą i podrzuca graczy." },
+        { id: "sticky_bog", name: "Lepkie bagno", icon: "▤", description: "Zamienia pobliską trawę i ziemię w błoto." },
+        { id: "nightmare", name: "Koszmar nocny", icon: "◉", description: "Przywołuje fantomy i nakłada efekt ciemności." },
+        { id: "lava_geyser", name: "Lawowy gejzer", icon: "♨", description: "Tworzy gejzer z lawy nad powierzchnią." },
+        { id: "freeze", name: "Zamrożenie", icon: "❄", description: "Zamienia pobliską wodę w zbity lód." },
+        { id: "shock", name: "Porażenie", icon: "ϟ", description: "Uderzenie elektryczne zadaje obrażenia." },
+        { id: "death_flash", name: "Błysk śmierci", icon: "✦", description: "Oślepiający błysk i ogłuszający huk." },
+        { id: "spider_maze", name: "Pajęczy labirynt", icon: "▥", description: "Tworzy gęstą sieć pajęczyn w wolnych miejscach." },
+        { id: "soul_sand_bog", name: "Piaskowe bagno", icon: "⌄", description: "Zamienia trawę i ziemię w piasek dusz." },
+        { id: "chorus_chaos", name: "Chorusowy rozpad", icon: "↯", description: "Powtarzające się impulsy wyrzucają graczy w górę." },
+        { id: "fiery_breath", name: "Ognisty oddech", icon: "♨", description: "Seria ognistych pocisków z bezpiecznymi eksplozjami." },
+        { id: "ghast_cry", name: "Płacz ghasta", icon: "◉", description: "Przywołuje ghasta i rozlega się jego krzyk." },
+        { id: "nether_cataclysm", name: "Netherowy kataklizm", icon: "▧", description: "Kontrolowana eksplozja i przemiana części kamienia." },
+        { id: "ocean_drain", name: "Wysysacz oceanów", icon: "◌", description: "Usuwa pobliskie bloki wody." },
+        { id: "lightning_chain", name: "Łańcuch piorunów", icon: "ϟ", description: "Łańcuch pięciu uderzeń błyskawic." },
+        { id: "gravity_trap", name: "Pułapka grawitacyjna", icon: "↑", description: "Na krótko unosi graczy w powietrze." },
+        { id: "levitation_anomaly", name: "Lewitacyjna anomalia", icon: "↑", description: "Silna lewitacja obejmuje większy obszar." },
+        { id: "false_death", name: "Fałszywa śmierć", icon: "◌", description: "Kontrolowana eksplozja i krótki efekt Withera." }
+      ];
       const loginLabel = $("#login-label");
       const loginSubmitButton = $("#login-form button[type=submit]");
       let token = RELAY_MODE ? "" : (sessionStorage.getItem("mintcore-token") || "");
@@ -746,14 +858,58 @@
       function renderPlayers(players) {
         const selected = playerSelect.value;
         const options = [new Option("Konsola serwera", "")];
+        const disasterOptions = [];
         for (const player of players) {
           options.push(new Option(`${normalizeFontText(player.name)} · ${normalizeFontText(player.world)}`, player.id));
+          disasterOptions.push(new Option(player.name, player.name));
         }
         playerSelect.replaceChildren(...options);
+        $("#disaster-player-suggestions").replaceChildren(...disasterOptions);
         if (players.some((player) => player.id === selected)) playerSelect.value = selected;
         $("#context-label").textContent = playerSelect.value
           ? `Wybrano: ${playerSelect.options[playerSelect.selectedIndex].text.split(" · ")[0]}`
           : "Wybrano: konsola";
+      }
+
+      function renderDisasterCards() {
+        const cards = disasters.map((disaster) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `disaster-card${disaster.featured ? " featured" : ""}`;
+          button.dataset.disasterId = disaster.id;
+          button.setAttribute("aria-label", `${disaster.name}: ${disaster.description}`);
+
+          const icon = document.createElement("span");
+          icon.className = "disaster-icon";
+          icon.textContent = disaster.icon;
+          const copy = document.createElement("span");
+          const title = document.createElement("strong");
+          title.textContent = disaster.name;
+          const description = document.createElement("small");
+          description.textContent = disaster.description;
+          copy.append(title, description);
+          button.append(icon, copy);
+
+          if (disaster.featured) {
+            const featured = document.createElement("span");
+            featured.className = "disaster-featured-label";
+            featured.textContent = "POLECANE";
+            button.append(featured);
+          }
+          return button;
+        });
+        $("#disaster-grid").replaceChildren(...cards);
+      }
+
+      function selectDisaster(disaster) {
+        selectedDisaster = disaster;
+        $("#disaster-grid").querySelectorAll(".disaster-card").forEach((card) => {
+          card.classList.toggle("selected", card.dataset.disasterId === disaster.id);
+        });
+        $("#disaster-selected-title").textContent = normalizeFontText(disaster.name);
+        $("#disaster-selected-description").textContent = normalizeFontText(disaster.description);
+        $("#disaster-form").hidden = false;
+        disasterPlayerInput.focus();
       }
 
       function renderGui(gui) {
@@ -946,20 +1102,70 @@
         }
       });
 
-      $("#tab-console").addEventListener("click", () => {
-        $("#tab-console").classList.add("active");
-        $("#tab-checks").classList.remove("active");
-        $("#console-panel").style.display = "grid";
-        $("#checks-panel").classList.remove("active");
-        updateActiveTabIndicator();
+      $("#disaster-grid").addEventListener("click", (event) => {
+        const card = event.target.closest(".disaster-card");
+        if (!card) return;
+        const disaster = disasters.find((entry) => entry.id === card.dataset.disasterId);
+        if (disaster) selectDisaster(disaster);
       });
-      $("#tab-checks").addEventListener("click", () => {
-        $("#tab-checks").classList.add("active");
-        $("#tab-console").classList.remove("active");
-        $("#console-panel").style.display = "none";
-        $("#checks-panel").classList.add("active");
-        updateActiveTabIndicator();
+
+      $("#disaster-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!selectedDisaster) return;
+        const player = disasterPlayerInput.value.trim();
+        if (!/^[A-Za-z0-9_]{3,16}$/.test(player)) {
+          showNotice("Wpisz prawidłowy nick gracza (3–16 znaków: litery, cyfry lub _).", true);
+          return;
+        }
+
+        const button = $("#disaster-launch");
+        button.disabled = true;
+        try {
+          const result = await api("/api/command", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+            body: new URLSearchParams({ command: `mintcore-disaster ${selectedDisaster.id} ${player}`, player: "" })
+          });
+          showNotice(result.message || "Polecenie katastrofy wysłane.", result.ok === false);
+        } catch (error) {
+          showNotice(error.message, true);
+        } finally {
+          button.disabled = false;
+        }
       });
+
+      $("#restore-disaster-terrain").addEventListener("click", async (event) => {
+        if (!window.confirm("Odtworzyć wszystkie bloki zarejestrowane przez katastrofy z panelu?")) return;
+        const button = event.currentTarget;
+        button.disabled = true;
+        try {
+          const result = await api("/api/command", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+            body: new URLSearchParams({ command: "mintcore-disaster restore", player: "" })
+          });
+          showNotice(result.message || "Polecenie odtwarzania terenu wysłane.", result.ok === false);
+        } catch (error) {
+          showNotice(error.message, true);
+        } finally {
+          button.disabled = false;
+        }
+      });
+
+      function activateTab(name) {
+        const activeId = `tab-${name}`;
+        document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.id === activeId));
+        $("#console-panel").style.display = name === "console" ? "grid" : "none";
+        $("#checks-panel").classList.toggle("active", name === "checks");
+        $("#disaster-panel").classList.toggle("active", name === "disaster");
+        $(".workspace").dataset.activeTab = name;
+        updateActiveTabIndicator();
+      }
+
+      $("#tab-console").addEventListener("click", () => activateTab("console"));
+      $("#tab-checks").addEventListener("click", () => activateTab("checks"));
+      $("#tab-disaster").addEventListener("click", () => activateTab("disaster"));
+
       function updateActiveTabIndicator() {
         const activeTab = $(".tab.active");
         const tabs = $(".tabs");
@@ -968,7 +1174,8 @@
         tabs.style.setProperty("--tab-active-width", `${activeTab.offsetWidth}px`);
       }
       window.addEventListener("resize", updateActiveTabIndicator);
-      updateActiveTabIndicator();
+      renderDisasterCards();
+      activateTab("console");
       $("#clear-button").addEventListener("click", () => {
         clearedBefore = Date.now();
         logList.replaceChildren();
