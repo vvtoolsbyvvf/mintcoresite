@@ -107,6 +107,34 @@
       .tab.active { border-color: transparent; background: transparent; color: var(--green); }
       .toolbar-actions { display: flex; align-items: center; gap: 10px; }
       .workspace[data-active-tab="disaster"] #toolbar-actions { display: none; }
+      .workspace[data-active-tab="checks"] .server-control-bar,
+      .workspace[data-active-tab="disaster"] .server-control-bar { display: none; }
+      .server-control-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 11px 15px;
+        border-bottom: 1px solid rgba(105, 145, 113, .17);
+        background: rgba(10, 15, 12, .68);
+      }
+      .server-control-info { display: grid; gap: 5px; }
+      .server-control-title { color: #b7c8bb; font-size: 9px; letter-spacing: .7px; }
+      .server-control-status { color: var(--muted); font-size: 8px; }
+      .server-control-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+      .server-action {
+        min-width: 90px;
+        min-height: 36px;
+        padding: 0 13px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      .server-action.stop { border-color: #873e43; background: linear-gradient(180deg, #64282e, #421b20); color: #ffd9d9; }
+      .server-action.restart { border-color: #89602f; background: linear-gradient(180deg, #67451f, #432c16); color: #ffe6bc; }
+      .server-action.start { border-color: #263b2c; background: #101712; color: #5c7664; cursor: not-allowed; }
+      .server-action:disabled:not(.start) { border-color: #303a33; background: #171c18; color: #68726b; cursor: not-allowed; opacity: .68; }
+      .server-action:not(:disabled):hover { filter: brightness(1.15); }
       .select-wrap { display: flex; align-items: center; gap: 9px; color: var(--muted); }
       select, input {
         min-height: 38px;
@@ -121,8 +149,8 @@
       .icon-button { min-width: 38px; min-height: 38px; border: 1px solid var(--line); background: #101711; color: var(--muted); cursor: pointer; }
       .icon-button:hover { border-color: #4a7553; color: var(--green); }
 
-      .console-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 390px); min-height: 570px; }
-      .terminal-column { display: flex; min-width: 0; min-height: 570px; flex-direction: column; border-right: 1px solid var(--line); }
+      .console-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 390px); height: min(72vh, 760px); min-height: 570px; max-height: 760px; overflow: hidden; }
+      .terminal-column { display: flex; min-width: 0; min-height: 0; height: 100%; flex-direction: column; overflow: hidden; border-right: 1px solid var(--line); }
       .terminal-head, .gui-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 45px; padding: 0 15px; border-bottom: 1px solid #202b23; color: var(--muted); }
       .terminal-head strong, .gui-head strong { color: #cbd9ce; font-weight: normal; }
       .terminal-lights { display: flex; gap: 5px; }
@@ -130,7 +158,7 @@
       .terminal-lights i:first-child { background: #b96559; }
       .terminal-lights i:nth-child(2) { background: #caa55d; }
       .terminal-lights i:nth-child(3) { background: #70ae78; }
-      .log-list { display: flex; flex: 1; min-height: 440px; flex-direction: column; gap: 5px; overflow: auto; padding: 14px 15px; background-image: linear-gradient(rgba(255,255,255,.012) 1px, transparent 1px); background-size: 100% 25px; }
+      .log-list { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 5px; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: 14px 15px; background-image: linear-gradient(rgba(255,255,255,.012) 1px, transparent 1px); background-size: 100% 25px; }
       .log-entry { display: grid; grid-template-columns: 77px 66px minmax(0, 1fr); align-items: baseline; gap: 8px; min-height: 21px; line-height: 1.65; overflow-wrap: anywhere; }
       .log-time { color: #68786d; font-size: 9px; white-space: nowrap; }
       .log-level { color: #74857a; font-size: 9px; }
@@ -150,8 +178,8 @@
       .run-context { padding: 0 15px 11px; background: #101712; color: #75867a; font-size: 9px; }
       .run-context span { color: #b5c8b9; }
 
-      .gui-column { min-width: 0; background: #0d130f; }
-      .gui-body { display: flex; min-height: 515px; flex-direction: column; align-items: center; justify-content: flex-start; overflow: auto; padding: 24px 12px; }
+      .gui-column { min-width: 0; min-height: 0; overflow: auto; background: #0d130f; }
+      .gui-body { display: flex; min-height: 0; height: calc(100% - 45px); flex-direction: column; align-items: center; justify-content: flex-start; overflow: auto; padding: 24px 12px; }
       .inventory-frame { width: min(100%, 352px); padding: 7px; border: 2px solid #f4f4f4; background: #c6c6c6; box-shadow: inset 0 0 0 2px #555, inset 0 0 0 3px #eee, 0 10px 25px rgba(0,0,0,.3); image-rendering: pixelated; }
       .inventory-title { min-height: 24px; padding: 4px 3px 6px; color: #404040; font-size: 10px; text-shadow: 1px 1px #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .slot-grid { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 2px; }
@@ -231,6 +259,75 @@
       .footer { display: flex; justify-content: space-between; gap: 15px; margin-top: 14px; color: #6f7f74; font-size: 9px; line-height: 1.8; }
       .footer strong { color: #a4b7a9; font-weight: normal; }
 
+      body {
+        background-color: #080b09;
+        background-image:
+          radial-gradient(circle at 19px 19px, rgba(117, 220, 140, .34) 1px, transparent 1.7px),
+          linear-gradient(rgba(117, 220, 140, .055) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(117, 220, 140, .055) 1px, transparent 1px),
+          radial-gradient(ellipse at 82% -10%, rgba(43, 105, 61, .22), transparent 38rem),
+          linear-gradient(135deg, #0b100d 0%, var(--bg) 60%);
+        background-size: 38px 38px, 38px 38px, 38px 38px, auto, auto;
+        background-attachment: fixed;
+      }
+
+      .shell { padding-top: 28px; }
+      .brand-mark { border-radius: 14px; }
+      .online-pill, .connection-pill { border-radius: 999px; background: rgba(15, 23, 18, .86); }
+      .workspace {
+        border-color: rgba(105, 145, 113, .28);
+        border-radius: 20px;
+        background: rgba(12, 17, 14, .94);
+        box-shadow: 0 28px 90px rgba(0, 0, 0, .42), 0 0 45px rgba(55, 116, 68, .06);
+        backdrop-filter: blur(12px);
+      }
+      .toolbar { padding: 13px 16px; background: rgba(17, 24, 19, .9); }
+      .server-control-bar { padding: 12px 17px; }
+      .server-action { border-radius: 10px; }
+      .tabs { gap: 5px; padding: 4px; border: 1px solid rgba(112, 149, 119, .12); border-radius: 14px; background: rgba(7, 11, 8, .55); }
+      .tabs::before { top: 4px; bottom: 4px; border-radius: 10px; }
+      .tab { padding: 10px 15px; border-radius: 10px; }
+      select, input { border-radius: 11px; background-color: rgba(8, 13, 10, .88); }
+      select:focus, input:focus { box-shadow: 0 0 0 3px rgba(103, 180, 122, .12); }
+      .icon-button, .send-button, .primary-button, .restore-button, .stop-disasters-button { border-radius: 11px; }
+      .console-layout { background: rgba(10, 15, 12, .48); }
+      .terminal-column { border-right-color: rgba(105, 145, 113, .2); }
+      .terminal-head, .gui-head { border-bottom-color: rgba(105, 145, 113, .16); }
+      .log-list { background-color: rgba(7, 11, 8, .34); }
+      .command-form { border-top-color: rgba(105, 145, 113, .2); background: rgba(15, 22, 17, .85); }
+      .run-context { background: rgba(15, 22, 17, .85); }
+      .gui-column { background: rgba(9, 14, 11, .58); }
+      .gui-placeholder-mark { border-radius: 16px; background: rgba(18, 30, 21, .5); }
+      .checks-head { border-bottom-color: rgba(105, 145, 113, .18); }
+      .checks-count { border-radius: 999px; }
+      .check-entry {
+        border-color: rgba(105, 145, 113, .17);
+        border-radius: 13px;
+        background: rgba(17, 24, 19, .82);
+      }
+      .disaster-card {
+        border-color: rgba(105, 145, 113, .2);
+        border-radius: 14px;
+        background: linear-gradient(145deg, rgba(18, 26, 21, .94), rgba(11, 17, 13, .94));
+      }
+      .disaster-card.featured { border-color: rgba(196, 159, 83, .48); border-radius: 14px; }
+      .disaster-card { grid-template-columns: 42px minmax(0, 1fr); gap: 12px; min-height: 82px; padding: 12px; }
+      .disaster-icon { width: 42px; height: 42px; border-radius: 12px; }
+      .disaster-icon svg { width: 23px; height: 23px; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
+      .disaster-card:hover .disaster-icon svg { filter: drop-shadow(0 0 4px currentColor); }
+      .disaster-side { border-left-color: rgba(105, 145, 113, .17); background: rgba(12, 18, 14, .58); }
+      .disaster-warning { border-radius: 999px; }
+      .disaster-safety { border-radius: 0 11px 11px 0; }
+      .login-overlay { background: rgba(5, 8, 6, .78); }
+      .login-card {
+        border-color: rgba(100, 158, 111, .42);
+        border-radius: 20px;
+        background: rgba(14, 21, 16, .96);
+        box-shadow: 0 28px 100px rgba(0, 0, 0, .6), 0 0 55px rgba(65, 143, 81, .1);
+      }
+      .notice { border-radius: 14px; backdrop-filter: blur(10px); }
+      .mc-tooltip { border-radius: 8px; }
+
       .login-overlay { position: fixed; z-index: 5; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(5, 8, 6, .88); backdrop-filter: blur(7px); }
       .login-overlay[hidden] { display: none; }
       .login-card { width: min(420px, 100%); padding: 27px; border: 1px solid #35513c; background: #101713; box-shadow: 0 24px 90px rgba(0,0,0,.5); }
@@ -260,14 +357,19 @@
         .topbar { align-items: flex-start; }
         .top-status { flex-direction: column; align-items: flex-end; gap: 6px; }
         .hero { align-items: flex-start; flex-direction: column; }
-        .console-layout { grid-template-columns: minmax(0, 1fr); }
+        .server-control-bar { align-items: flex-start; flex-direction: column; }
+        .server-control-actions { width: 100%; }
+        .server-action { flex: 1; min-width: 0; }
+        .console-layout { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 0; max-height: none; overflow: visible; }
+        .terminal-column { height: min(62vh, 560px); min-height: 390px; }
+        .gui-column { min-height: 395px; }
+        .gui-body { min-height: 350px; height: auto; }
         .disaster-panel.active { grid-template-columns: minmax(0, 1fr); }
         .disaster-side { border-top: 1px solid var(--line); border-left: 0; }
         .disaster-heading { flex-direction: column; }
         .disaster-warning { white-space: normal; }
         .disaster-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); }
         .terminal-column { border-right: 0; border-bottom: 1px solid var(--line); }
-        .gui-body { min-height: 350px; }
         .log-entry { grid-template-columns: 61px 55px minmax(0, 1fr); gap: 5px; }
         .check-entry { grid-template-columns: 1fr; gap: 2px; }
         .footer { flex-direction: column; }
@@ -331,6 +433,17 @@
               <select id="player-select"><option value="">Konsola serwera</option></select>
             </label>
             <button class="icon-button" id="clear-button" type="button" title="Wyczyść widok logów">⌫</button>
+          </div>
+        </div>
+        <div class="server-control-bar" id="server-control-bar">
+          <div class="server-control-info">
+            <strong class="server-control-title">STEROWANIE SERWEREM</strong>
+            <span class="server-control-status" id="server-control-status">Oczekiwanie na połączenie z serwerem...</span>
+          </div>
+          <div class="server-control-actions">
+            <button class="server-action stop" id="server-stop" type="button" disabled>STOP</button>
+            <button class="server-action restart" id="server-restart" type="button" disabled>RESTART</button>
+            <button class="server-action start" id="server-start" type="button" disabled title="Uruchom serwer ręcznie w panelu Gemhost">START</button>
           </div>
         </div>
 
@@ -425,7 +538,7 @@
       let selectedDisaster = null;
       const disasters = [
         { id: "meteor_shower", name: "Deszcz meteorytów", icon: "☄", featured: true, description: "Wielki blok magmy 3×3 leci na fireballu, niszczy teren i zapisuje bloki do odtworzenia." },
-        { id: "tornado", name: "Wielkie tornado", icon: "⟳", featured: true, description: "Gęsty wir nakładających się bloków. Po krótkim błądzeniu rusza w pościg za wybranym graczem." },
+        { id: "tornado", name: "Wielkie tornado", icon: "⟳", featured: true, description: "Gęsty wir bloków sprowadza burzę i deszcz, po chwili ruszając w pościg za graczem." },
         { id: "zombie_apocalypse", name: "Apokalipsa zombie", icon: "☠", description: "Fale zombie pojawiają się w okolicy celu." },
         { id: "flood", name: "Potop", icon: "≈", description: "Wypełnia pobliskie wolne przestrzenie wodą." },
         { id: "sky_wrath", name: "Uderzenie niebios", icon: "⚡", description: "Seria błyskawic i kontrolowanych eksplozji." },
@@ -464,6 +577,47 @@
         { id: "levitation_anomaly", name: "Lewitacyjna anomalia", icon: "↑", description: "Silna lewitacja obejmuje większy obszar." },
         { id: "false_death", name: "Fałszywa śmierć", icon: "◌", description: "Kontrolowana eksplozja i krótki efekt Withera." }
       ];
+      const disasterIconPaths = {
+        meteor_shower: "M4 20 15 9l4 4L8 24M12 12l1-5m5 5 4-1M8 17l-5 1M16 5l1-2",
+        tornado: "M3 5h18M5 9h14M7 13h10M9 17h6M10 21h4",
+        zombie_apocalypse: "M7 3h10v3h3v12h-3v3H7v-3H4V6h3zM8 10h2m4 0h2m-7 5 2 2 2-2 2 2",
+        flood: "M3 8c2-3 4 3 6 0s4-3 6 0 4 3 6 0M3 14c2-3 4 3 6 0s4-3 6 0 4 3 6 0M3 20c2-3 4 3 6 0s4-3 6 0 4 3 6 0",
+        sky_wrath: "M13 2 5 13h6l-1 9 9-12h-6z",
+        earthquake: "M4 3v7h5l-3 5h7l-2 6 9-10h-6l3-5h-5V3",
+        acid_rain: "M7 14a5 5 0 0 1 1-10 6 6 0 0 1 11 2 4 4 0 0 1 0 8M8 17l-1 3m6-3-1 3m6-3-1 3",
+        spider_invasion: "M12 10a3 3 0 1 0 0 6 3 3 0 0 0 0-6M10 11 6 7 3 8m5 4H3l-1 3m8 0-4 4-3-1m11-7 4-4 3 1m-5 3h5l1 3m-8 0 4 4 3-1",
+        drought_fire: "M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.2 2.2m8.4 8.4 2.2 2.2m0-12.8-2.2 2.2m-8.4 8.4-2.2 2.2M12 8c-3 4-3 5-3 6a3 3 0 0 0 6 0c0-1-1-3-3-6z",
+        rage_plague: "M12 3c-1 4-6 5-6 11a6 6 0 0 0 12 0c0-3-2-5-4-7 0 3-1 4-2 4 1-4 0-6 0-8z",
+        hell_meteor: "M5 18 14 5l5 5-9 13zM4 6l3 2m10-6 1 3m3 9 3 1M3 13l3-1",
+        blizzard: "M12 3v18M4.2 7.5l15.6 9m-15.6 0 15.6-9M9 5l3 3 3-3m-6 14 3-3 3 3M5 11l4 1-1-4m12 4-4 1 1-4M5 13l4-1-1 4m12-4-4-1 1 4",
+        golden_flash: "M12 2.5 14.8 9l7 1-5.1 4.8 1.3 7-6-3.4-6 3.4 1.2-7L2 10l7-1zM12 7v7m-3.5-3.5h7",
+        wither_bomb: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7v5l3 2m-9-9-2-2m16 0 2-2M3 12H1m22 0h-2",
+        explosive_rain: "M7 14a5 5 0 0 1 1-10 6 6 0 0 1 11 2 4 4 0 0 1 0 8M8 18l1 3m6-3-1 3m5-3 1 3M12 6v3m-2-2 2 2 2-2",
+        toxic_fog: "M5 14a5 5 0 0 1 1-10 6 6 0 0 1 11 2 4 4 0 0 1 0 8H5m2 4h10m-7 3h4",
+        anvil_rain: "M4 5h7v4h4l2 5h3v4H4v-4h3V9H4zM8 3v2m8 1 2-2",
+        toxic_gas: "M12 3 21 8v8l-9 5-9-5V8zM12 8v5m0 3h.01",
+        teleport_chaos: "M4 7h12m0 0-4-4m4 4-4 4m8 6H8m0 0 4-4m-4 4 4 4",
+        magnetic_storm: "M4 8a8 8 0 0 1 16 0c0 3-2 5-4 7v3H8v-3c-2-2-4-4-4-7m4 13h8m-4-20v3m-9 4 3 1m15-1-3 1",
+        time_stop: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7v5l4 2M5 4 3 2m16 2 2-2",
+        ocean_wave: "M3 9c2-3 4 3 6 0s4-3 6 0 4 3 6 0M3 15c2-3 4 3 6 0s4-3 6 0 4 3 6 0M3 21c2-3 4 3 6 0s4-3 6 0 4 3 6 0",
+        sticky_bog: "M5 4h14l2 4-3 3 2 4-3 5H7l-3-5 2-4-3-3zM8 8h8m-9 7h10m-7 4 2-4 2 4",
+        nightmare: "M3 13a9 9 0 1 0 18 0 9 9 0 0 0-18 0M8 10h2m4 0h2m-8 5 2 2 2-2 2 2 2-2M12 2V1",
+        lava_geyser: "M12 22c-4 0-7-3-7-6 0-2 2-4 3-6 0 3 2 3 2 1 0-4 2-7 4-9 0 5 5 8 5 14 0 3-3 6-7 6zM9 18c0-2 2-3 3-5 1 2 3 3 3 5a3 3 0 0 1-6 0z",
+        freeze: "M12 3v18M5 7l14 10M5 17 19 7m-11 0 4 3 4-3m-8 10 4-3 4 3",
+        shock: "M14 2 5 14h6l-1 8 9-12h-6zM4 5 2 3m18 2 2-2",
+        death_flash: "M12 2 14 9l7-4-4 7 7 2-7 2 4 7-7-4-2 7-2-7-7 4 4-7-7-2 7-2-4-7 7 4z",
+        spider_maze: "M4 4h16v16H4zM4 4l16 16M20 4 4 20M12 4v16M4 12h16",
+        soul_sand_bog: "M3 19h18M5 15h14M7 11h10M9 7h6M11 3h2m-1 0v16",
+        chorus_chaos: "M12 22V4m0 0L6 10m6-6 6 6m-9 5 3 3 3-3M4 4h2M18 4h2",
+        fiery_breath: "M4 12c4-1 6-4 8-9 1 5 2 6 4 7 2 1 4 0 5-2 0 8-4 13-10 13-5 0-8-3-7-9zm5 5c1-2 2-3 3-5 0 2 3 3 3 6a3 3 0 0 1-6-1z",
+        ghast_cry: "M5 5h14v11h-3l-4 4-4-4H5zM8 9h2m4 0h2m-6 4h4M3 8 1 6m20 2 2-2",
+        nether_cataclysm: "M12 2 21 7v10l-9 5-9-5V7zM8 9l3 2-2 4 5-2 2 3 2-5-3-1 1-3z",
+        ocean_drain: "M12 3c-3 4-6 7-6 11a6 6 0 0 0 12 0c0-4-3-7-6-11zM4 6l3 3m13-3-3 3M12 11v7m-3-3 3 3 3-3",
+        lightning_chain: "M13 2 5 13h6l-1 9 9-12h-6zM4 5l2 2m12 10 2 2",
+        gravity_trap: "M12 3v15m0 0-5-5m5 5 5-5M4 6h4m8 0h4M4 21h16",
+        levitation_anomaly: "M12 21V6m0 0L7 11m5-5 5 5M4 10h3m10 0h3M6 3l2 2m10-2-2 2",
+        false_death: "M12 3 21 8v8l-9 5-9-5V8zM8 9l8 6m0-6-8 6m4-13v2"
+      };
       const loginLabel = $("#login-label");
       const loginSubmitButton = $("#login-form button[type=submit]");
       let token = RELAY_MODE ? "" : (sessionStorage.getItem("mintcore-token") || "");
@@ -890,7 +1044,14 @@
 
           const icon = document.createElement("span");
           icon.className = "disaster-icon";
-          icon.textContent = disaster.icon;
+          icon.setAttribute("aria-hidden", "true");
+          const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          svg.setAttribute("viewBox", "0 0 24 24");
+          svg.setAttribute("focusable", "false");
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path.setAttribute("d", disasterIconPaths[disaster.id] || "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18");
+          svg.append(path);
+          icon.append(svg);
           const copy = document.createElement("span");
           const title = document.createElement("strong");
           title.textContent = disaster.name;
@@ -995,6 +1156,7 @@
           const state = await api(`/api/state${query}`);
           $("#connection-dot").classList.remove("offline");
           $("#connection-label").textContent = "Połączono";
+          updateServerControls(true);
           $("#online-count").textContent = state.online;
           renderPlayers(state.players);
           renderEvents(state.events);
@@ -1005,6 +1167,7 @@
         } catch (error) {
           $("#connection-dot").classList.add("offline");
           $("#connection-label").textContent = "Brak połączenia";
+          updateServerControls(false);
           if ((!RELAY_MODE && error.message.includes("token")) || (RELAY_MODE && error.status === 401)) {
             sessionStorage.removeItem("mintcore-token");
             token = "";
@@ -1017,6 +1180,42 @@
           polling = false;
         }
       }
+
+      function updateServerControls(connected = !$("#connection-dot").classList.contains("offline")) {
+        const status = $("#server-control-status");
+        const ready = connected && $("#connection-label").textContent === "Połączono";
+        $("#server-stop").disabled = !ready;
+        $("#server-restart").disabled = !ready;
+        $("#server-start").disabled = true;
+        status.textContent = ready
+          ? "Serwer online · Start uruchom ręcznie w panelu Gemhost."
+          : "Serwer offline lub brak połączenia · Uruchom serwer w panelu Gemhost.";
+      }
+
+      async function sendServerControl(command, confirmation) {
+        if (!window.confirm(confirmation)) return;
+        const buttons = [$("#server-stop"), $("#server-restart")];
+        buttons.forEach((button) => { button.disabled = true; });
+        try {
+          const result = await api("/api/command", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+            body: new URLSearchParams({ command, player: "" })
+          });
+          showNotice(result.message || `Wysłano /${command}.`, result.ok === false);
+        } catch (error) {
+          showNotice(error.message, true);
+        } finally {
+          updateServerControls();
+        }
+      }
+
+      $("#server-stop").addEventListener("click", () => {
+        sendServerControl("stop", "Zatrzymać serwer Minecraft? Gracze zostaną rozłączeni.");
+      });
+      $("#server-restart").addEventListener("click", () => {
+        sendServerControl("restart", "Uruchomić /restart? Dalsze ponowne uruchomienie zależy od konfiguracji Gemhost.");
+      });
 
       $("#login-form").addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -1214,6 +1413,7 @@
       });
       playerSelect.addEventListener("change", refresh);
 
+      updateServerControls(false);
       normalizeVisibleText();
       if (RELAY_MODE) {
         setLoginStage("primary");
